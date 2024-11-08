@@ -1,0 +1,44 @@
+{
+
+    "latex-workshop.latex.tools": [
+        {
+            "name": "platex",
+            "command": "platex",
+            "args": [
+                "-synctex=1",
+                "-interaction=nonstopmode",
+                "-file-line-error",
+                "%DOC%",
+            ],
+        },
+        {
+            "name": "bibtex",
+            "command": "bibtex",
+            "args": [
+                "%DOCFILE%",
+            ],
+            "env": {
+            },
+        },
+        {
+            "name": "dvipdfmx",
+            "command": "dvipdfmx",
+            "args": [
+                "%DOC%.dvi"
+            ],
+            "env": {}
+        }
+    ],
+    "latex-workshop.latex.recipes": [
+        {
+            "name": "platex > bibtex > platex*2 > dvipdfmx",
+            "tools": [
+                "platex",
+                "bibtex",
+                "platex",
+                "platex",
+                "dvipdfmx",
+            ],
+        },
+    ],
+}
