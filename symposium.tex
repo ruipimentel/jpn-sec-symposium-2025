@@ -58,7 +58,21 @@ Graduate School of Medicine, Science and Technology, Shinshu University
 
 \section{Introduction}
 
-TBD
+In modern cybersecurity contexts, situations such as Advanced Persistent Threats (APT) have highlighted the limitations of traditional defense mechanisms, underscoring the need for proactive strategies that assume eventual breaches.
+Game-theoretical models are developed in this domain with the goal of deriving policy best practices.
+In particular, FlipIt \cite{dijk2013flipit} is one of these models, simulating stealthy take overs of a resource being disputed by two adversarial agents: one defender and one attacker.
+Both can make moves at any point in a continuous timeline to seize control of the resource, with each move incurring costs that impact their overall payoff.
+
+Recent extensions of FlipIt incorporate multi-objective and continuous strategy spaces, enabling more complex models that better describe real-world cyber scenarios.
+For instance, our previous approach \cite{leite2024cec} introduced infrastructure enhancements, which model the benefits of passive defenses like firewalls.
+We also explored the use of Co-Evolutionary Algorithms (CoEA) for estimating Pure Strategy Nash Equilibria (PSNE) in such games.
+While effective, this approach presented challenges in terms of architectural complexity and noisy estimations.
+
+In this paper, we present a novel optimization procedure for continuous games of simultaneous decision, specifically aiming at providing a more comprehensive framework for the approximation of game solutions even when the objective space is continuous and, thus, may potentially contain an infinite number of game solutions.
+Through experimental validations, we demonstrate the method's convergence to a finite but representative number of PSNE, with the noise decreasing as more computing resources are allocated to the optimization process.
+
+More that the concrete basic algorithmic implementation demonstrated in this work, the proposed method contributes a refined abstract procedure which we hope will guide the development of new, more efficient methods to solve game theory models of simultaneous decision, continuous decision spaces, and any number of players and solutions, with applications beyond FlipIt.
+The remainder of this paper is organized as follows: Section II details related works; Section III describes the proposed algorithm; Section IV presents the experimental setup and results; Section V discusses our findings, and Section VI concludes with potential avenues for future research.
 
 
 \section{Conclusions and Future Works}
