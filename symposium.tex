@@ -222,12 +222,46 @@ The procedure overview is shown in Algorithm \ref{alg:approximation}.
 \section{Experimental setup}
 \label{methodology}
 
+The game model used for the experiments was FlipIt with IE and Periodic Strategies (PS) \cite{leite2024cec}, with $φ_0=5$, $k_D=1.0$, $k_A=1.5$ and $c=0.2$.
+The decision space was discretized into a 40x40x160 grid, with minimum and maximum bounds of 0.01 and 3.00, respectively, for the defender's $\phi$, and 0.005 and 3.00, respectively, for the defender's $\alpha_D$ and the attacker's $\alpha_A$.
+Game results were evaluated algebraically through the payoff functions for each player \cite{leite2024cec}.
+
 NSGA-II was arbitrarily chosen as the multi-objective evolutionary algorithm for each BRDV approximation, even though the BRDVs for the attacker are actually single-objective problems.
 This was done to keep the experimental code short and simple, even though a single-objective algorithm could (and arguably should) be especially allocated for single-objective players.
+Algorithm was executed for 400 generations, with each nested GA running 100 generations each time.
 
 
 \section{Results and discussion}
 \label{results}
+
+
+The experiment results are shown in Fig.~\ref{fig:approx_psne}.
+The figure displays the approximated PSNEs as dots, with defender-decision variables on the horizontal axes and the attacker's $\alpha_A$ on the vertical axis.
+The analytically determined (ideal) PSNE curve is shown as a continuous line, as reference for the assessment of the numerical results.
+Fig.~\ref{fig:approx_fitness} shows the fitness values for each approximated PSNE.
+
+\begin{figure}[h]
+    \centering
+    % Converted with: pdftops -eps figs/approx_psne_decision_space.pdf
+    \includegraphics[width=0.9\linewidth]{figs/approx_psne_decision_space.eps}
+    \caption{Approximated PSNEs for FlipIt with IE and PS shown as dots; the continuous line represents the ideal PSNE curve.}
+    \label{fig:approx_psne}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    % Converted with: pdftops -eps figs/approx_psne_objective_space.pdf
+    \includegraphics[width=0.9\linewidth]{figs/approx_psne_objective_space.eps}
+    \caption{Fitness of the solutions found vs. the ideal fitness curve.}
+    \label{fig:approx_fitness}
+\end{figure}
+
+As can be seen, the approximations closely follow the ideal curve, with very few outliers (in the current run, only one can be seen).
+The average distance of the approximations to the ideal curve for this run is 0.0381, with a standard deviation of 0.0255.
+This rivals the results obtained in \cite{leite2024cec}.
+
+The number of estimations (77), while far from the previously obtained number, and even further from the ideal (infinite), is enough to provide a good visual representation of the PSNE curve.
+These results suggest that the proposed method is effective in numerically approximating PSNEs for continuous games of simultaneous decision, providing valuable insights into the game's equilibrium tendencies even in the complete absence of analytical solutions.
 
 
 \section{Conclusions and future works}
