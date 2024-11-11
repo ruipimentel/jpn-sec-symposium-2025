@@ -158,7 +158,7 @@ In this case, the BRDVs form a 3D surface for each player.
 \end{figure}
 
 Regardless the shape of the these geometric figures, since by definition each PSNE is a state in which all players play a BRDV simultaneously, we can think about the PSNEs as the intersections of the figures for all players.
-This concept has been explictly used for single-objective players in \cite{dijk2013flipit}, and implictly in the GA implementation by \cite{sherfield2018flipthem}, but to the best of our knowledge, it has not been generalized to multi-objective players or multi-player games until now.
+This concept has been explictly used for single-objective players in \cite{dijk2013flipit}, and implictly in the EA implementation by \cite{sherfield2018flipthem}, but to the best of our knowledge, it has not been generalized to multi-objective players or multi-player games until now.
 
 
 \subsection{Numerical approximation procedure}
@@ -169,6 +169,53 @@ On a lesser note, each optimization is also not perfectly continuous since even 
 To address these limitations while still confirming the theoretical foundations of the idealized procedure, we propose a numerical procedure that discretizes the OSPs for each player, then approximates the BRDVs for each OSP by means of a regular multi-objective evolutionary algorithm.
 With this, we aim to avoid game-theoretical-specific fitness functions (see \cite{leite2024cec} \cite{lung2008computing} \cite{lung2020pareto}), adopting a Pareto-Front approach instead that shall appear more intuitive to researchers in the field of computational optimization.
 The PSNEs are then computed as the points from each player which are less than a small arbitrary distance $\epsilon$ apart of a point from every other player (i.e., the intersection of the approximated BRDVs).
+
+The procedure overview is shown in Algorithm \ref{alg:approximation}.
+
+\begin{algorithm}[h]
+    \SetAlgoLined
+    
+    \KwIn{\\
+        \begin{tabular}{ll}
+            \texttt{players} & Player data\\
+            \texttt{bounds} & Decision variable bounds\\
+            \texttt{n\_dims} & Grid divisions per decision\\
+            \texttt{n\_gens} & Number of generations\\
+            \texttt{n\_nest\_gens} & Nested generations by gen.\\
+            \texttt{$\epsilon$} & Intersection threshold\\
+        \end{tabular}
+    }
+
+    \For{\texttt{p} \textbf{in} \texttt{players}}{
+        \texttt{p.osps} $\leftarrow$ \texttt{get\_osps}(\texttt{p}, \texttt{bounds}, \texttt{n\_dims})\;
+        \For{\texttt{osp} \textbf{in} \texttt{p.osps}}{
+            \texttt{p.eas.add}(new EA for \texttt{p} and \texttt{osp})\;
+        }
+    }
+
+    \For{\texttt{g} \textbf{in} \texttt{1} \textbf{to} \texttt{n\_gens}}{
+        
+        \For{\texttt{p} \textbf{in} \texttt{players}}{
+            \For{\texttt{osp} \textbf{in} \texttt{p.osps}}{
+                \texttt{ea} $\leftarrow$ EA for \texttt{osp} in \texttt{p.eas}\;
+                \texttt{ea.run}(\texttt{n\_nest\_gens})\;
+                \tcp{Evaluates w/ \texttt{p.fitness\_fn}}
+            }
+        }
+        
+        \texttt{psnes} $\leftarrow$ \texttt{intersection}(\texttt{players}, \texttt{$\epsilon$})\;
+        \texttt{fits} $\leftarrow$ fitness \textbf{for} \texttt{psne} \textbf{in} \texttt{psnes}\;
+    }
+
+    \KwOut{\\
+        \begin{tabular}{ll}
+            \texttt{psnes} & Approximated solutions\\
+            \texttt{fitnesses} & Fitness values for approxs.\\
+        \end{tabular}
+    }
+    \caption{Numerical approximation of PSNEs}
+    \label{alg:approximation}
+\end{algorithm}
 
 
 
