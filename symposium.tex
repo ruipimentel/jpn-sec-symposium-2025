@@ -153,7 +153,8 @@ First, a payoff matrix like Table \ref{tab:payoffmatrix} is created with dimensi
 The payoff vectors are then filled in for each strategy profile.
 Next, for each player, we mark their preferred payoff for each unique combination of choices by their opponents.
 In the example, player 0's preferred payoff to each choice by player 1 is highlighted in blue and underscored; the same was done for player 1 in red and double underscore.
-The PSNE are identified at the end of this process as the strategy profiles for which all players get their preferred payoff simultaneously (i.e., player are all playing a best response against each other).
+The PSNE are identified at the end of this process as the strategy profiles for which all players get their preferred payoff simultaneously (i.e., players are all playing a best response against each other).
+In our example, the only PSNE is $(\texttt{Confess}, \texttt{Confess})$.
 
 \begin{table}[h]
     \caption{Payoff matrix for the Prisoner's Dilemma; the only Nash Equilibrium is highlighted in green.}
@@ -195,9 +196,9 @@ Each move incurs a cost ($k_i$) that negatively impacts $\beta_i$.
 The manner in which FlipIt is commonly solved involves defining a set of strategy classes from which the players can choose, and which in turn determine the players' move times.
 Such classes are also often parameterized, allowing for finer control over the exact move times.
 The strategy class we will focus on is the Periodic Strategy (PS), where the players move at regular intervals.
-PS is fully characterized by a scalar move rate $\alpha$, which determines the time between moves by the adopting player.
+PS is fully characterized by a scalar move rate $\alpha_i$, which determines the time between moves by the adopting player.
 As a consequence, a PS game of FlipIt can be modeled as a quadruple $\left (I=\left\{ 0,1 \right\}, (S_0 \subseteq \Rnn, S_1 \subseteq \Rnn), O \subseteq \R^2, f \right )$ \footnote{We use $\R$ to denote the set of real numbers, and $\Rnn$ for the set of non-negative real numbers.}.
-The strategy sets represent each player's choices for $\alpha$, and the fact that they are infinite means that the simple, classic procedure presented in Subsection \ref{gametheory} not applicable.
+The strategy sets represent each player's choices for $\alpha_i$, and the fact that they are infinite means that the simple, classic procedure presented in Subsection \ref{gametheory} is not applicable.
 The best responses for this game could, instead, be successfully determined algebraically \cite{dijk2013flipit}, resulting in analytical expressions for $f$ and $E$; however, the same is not true for more complex strategies for FlipIt, and/or for some of its extensions, and/or for scenarios where the opponents can choose from many different classes of strategies.
 
 Is this paper, we consider the FlipIt with Infrastructure Enhancement (IE) \cite{leite2024cec}, an extension of FlipIt where the defender can use IE to increase the resource's resilience to attacks.
@@ -246,19 +247,19 @@ Symmetrically, there are two OSPs for player 1.
 From the standpoint of any particular player, we can thus think of strategy profiles as combinations of this player's decisions with the OSPs.
 
 The procedure for solving a game begins by determining each player's best response, which can be generalized as finding the player's decision vectors that optimize their objectives for each OSP.
-In the case of the Prisoner's Dilemma, the best response decision vector (BRDV) for player 0 is $(Confess)$ for OSP $(Silent)$, and also $(Confess)$ for OSP $(Confess)$.
-Similarly, the BRDV for player 1 is always $(Confess)$.
+In the case of the Prisoner's Dilemma, the best response decision vector (BRDV) for player 0 is $(\texttt{Confess})$ for OSP $(\texttt{Silent})$, and also $(\texttt{Confess})$ for OSP $(\texttt{Confess})$.
+Similarly, the BRDV for player 1 is always $(\texttt{Confess})$.
 
 Each PSNE can be understood as a strategy profile from which no player has any reason to deviate.
 From each player's perspective, this occurs for three main reasons.
 First, because in such a state, the player is already playing a BRDV against the OSP they perceive.
-In our example, many people instinctively believe that $(Silent, Silent)$ is the optimal solution, but we observe that neither player plays a BRDV in this profile, so both are naturally inclined to deviate from it.
-In $(Confess, Confess)$, however, both are playing a BRDV, so there is no expectation of a payoff increase for that OSP.
+In our example, many people instinctively believe that $(\texttt{Silent}, \texttt{Silent})$ is the optimal solution, but we observe that neither player plays a BRDV in this profile, so both are naturally inclined to deviate from it.
+In $(\texttt{Confess}, \texttt{Confess})$, however, both are playing a BRDV, so there is no expectation of a payoff increase for that OSP.
 Second, even if there are other BRDVs available for that same OSP, switching to them would modify the OSP seen by the opponents, potentially resulting in them no longer playing a BRDV, thus rendering this new strategy profile unstable (as per the first rule).
 And third, in games with strictly greedy players, any changes that depend on OSP modifications must necessarily lead the involved opponents to a better outcome, as even an equivalent payoff would not sufficiently incentivize them to cooperate, let alone a smaller payoff.
 Even a higher payoff may still not guarantee cooperation if the resulting strategy profile is unstable.
-For instance, even though player 1 perceives $(Silent, Confess)$ as the most advantageous strategy profile, player 1 has no actual tool to convince player 0 to play $(Silent)$, as in this game the latter would always be better off playing $(Confess)$.
-As a consequence, the sole solution is $(Confess, Confess)$, meaning that this is the only way rational players are expected to play under the premise that they are greedy.
+For instance, even though player 1 perceives $(\texttt{Silent}, \texttt{Confess})$ as the most advantageous strategy profile, player 1 has no actual tool to convince player 0 to play $(\texttt{Silent})$, as in this game the latter would always be better off playing $(\texttt{Confess})$.
+As a consequence, the sole solution is $(\texttt{Confess}, \texttt{Confess})$, meaning that this is the only way rational players are expected to play under the premise that they are greedy.
 
 
 \subsection{Idealized Procedure}
@@ -294,10 +295,20 @@ The problem with the idealized procedure is that it is not feasible to run infin
 Moreover, each optimization is also not perfectly continuous, as even ``real'' variables are represented with a finite number of bits in a computer; although for all practical purposes we can consider them ``real'' valued.
 
 To address these limitations while still confirming the theoretical foundations of the idealized procedure, we propose a numerical procedure that discretizes the OSPs for each player, then approximates the BRDVs for each OSP using a regular single-objective or multi-objective Evolutionary Algorithm (EA).
+To do so, we divide the decision space into a grid with a user-specified number of divisions per decision variable, compute the grid centers, and use opponent-controlled variable values from these centers as OSPs.
 This approach avoids game-theory-specific fitness functions (see \cite{leite2024cec}, \cite{lung2008computing}, \cite{lung2020pareto}), adopting a Pareto-Front approach that should appear more intuitive to researchers in the field of Computational Optimization.
 The PSNEs are then computed as the points from each player that are within a small arbitrary distance $\epsilon$ from a point for every other player (i.e., the intersection of the approximated BRDVs).
 
 The procedure overview is shown in Algorithm~\ref{alg:approximation}.
+The algorithm receives as inputs the player data (such as the number of decisions and objectives), the upper and lower bounds for the decision variables, the number of grid divisions per decision variable, the number of outer loops to perform, the number of nested EA generations, and the intersection threshold $\epsilon$.
+
+The algorithm first computes the fixed OSPs for each player, then instantiates an EA for each player and OSP.
+Each of these EAs have the sole purpose of approximating the BRDVs by optimizing that player's objectives through evolutionary operators over the player's decisions (i.e., no changes are made to the OSP).
+Thus, each nested EA will be single-objective if the respective player is single-objective, or multi-objective if the player is multi-objective.
+The EAs are always made to evolve for a fixed number of generations before the algorithm proceeds to compute the PSNEs by intersecting approximated BRDVs from all players.
+Specifically, any BRDV estimation from one player that is within a small $\epsilon$ distance from at least one BRDV estimation from every other player is considered a PSNE.
+This can be seen as an approximation to the final step in the classic procedure for finding PSNEs presented in Subsection \ref{gametheory}, and closely resembles the NE interpretations discussed in the same subsection.
+Also, this allows one to establish a hard limit on the number of PSNEs to be found, which is given by the grid dimensions and the EA population sizes.
 
 \begin{algorithm}[h]
     \SetAlgoLined
