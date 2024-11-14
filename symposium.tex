@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{subcaption}
 \usepackage[table,dvipsnames]{xcolor}% http://ctan.org/pkg/xcolor
+\def\doubleunderline#1{\underline{\underline{#1}}}
 
 % Declares special characters to be used in equations:
 \newcommand{\B}{{\mathbb{B}}}
@@ -75,7 +76,7 @@ In particular, FlipIt \cite{dijk2013flipit} is one such model, simulating stealt
 
 Players have objectives, which are usually conflicting.
 The goal of the analyst is to find the so called Nash Equilibria (NE) of the game \cite{bonanno2018game}, which are states where all players successfully maximize their payoffs given the strategies of the other players.
-This is not equivalent to treating a game model as a Multi-Objective Optimization Problem (MOOP), as the players are not cooperating towards a common global optimal, but rather are more prone to sabotage each other's efforts.
+This is not equivalent to treating a game model as a Multi-Objective Optimization Problem (MOOP), as the players are not cooperating towards a common global optimal, but rather are more prone to sabotage each other's efforts; for this reason, games require dedicated optimization methods.
 
 Recent extensions of FlipIt incorporate multi-objective and continuous strategy spaces, enabling more complex models that better reflect real-world cyber scenarios.
 For instance, our previous approach \cite{leite2024cec} introduced infrastructure enhancements, which model the benefits of passive defenses like firewalls.
@@ -88,19 +89,19 @@ In this paper, we present a novel evolutionary-computing based optimization proc
 The proposed method shall appear intuitive to researchers in Game Theory, because it generalizes the basic analytical methods, but also to researchers in Computational Optimization, because it leverages concepts of this field to transform an otherwise infinite problem into a finite set of optimization ones.
 Through experimental validation, we demonstrate the method's convergence to a finite but representative number of game solutions, with noise being expected to decrease as more computing resources are allocated.
 
-Beyond the concrete basic algorithmic implementation demonstrated in this work, the proposed method contributes a general abstract procedure, which we hope will guide the development of new, more efficient methods for solving game theory models involving simultaneous decision, continuous decision spaces, and any number of players and solutions, with applications beyond FlipIt.
+Beyond the concrete basic algorithmic implementation demonstrated in this work, the proposed method contributes a general abstract procedure, which we hope will guide the development of new, more efficient methods for solving game theory models involving simultaneous decisions, continuous decision spaces, and any number of players and solutions, with applications beyond FlipIt.
 
-The remainder of this paper is organized as follows: Section \ref{relatedworks} reviews related work; Section \ref{algorithm} describes the proposed abstract and concrete procedures; Section \ref{methodology} presents the experimental setup; Section \ref{results} discusses our findings; and Section \ref{conclusions} concludes with potential avenues for future research.
+The remainder of this paper is organized as follows: Section \ref{relatedworks} reviews related works; Section \ref{algorithm} describes the proposed abstract and concrete procedures; Section \ref{methodology} presents the experimental setup; Section \ref{results} discusses our findings; and Section \ref{conclusions} concludes with potential avenues for future research.
 
 
-\section{Related Work}
+\section{Related Works}
 \label{relatedworks}
 
 
 \subsection{Game Theory and Nash Equilibria}
 \label{gametheory}
 
-Games with simultaneous decision by all players can be modeled by a quadruple $\left (I, (S_0, S_1, \dots, S_{n-1}), O, f \right )$ \cite{bonanno2018game}, comprised of a list of player identifiers $I = \{0, 1, \dots, n-1\}$ (where $n \geq 2$ is the number of players), a list containing one strategy set $S_p$ per player $p \in I$, a set $O$ of possible outcomes, and a payoff function $f$.
+Games with simultaneous decisions by all players can be modeled by a quadruple $\left (I, (S_0, S_1, \dots, S_{n-1}), O, f \right )$ \cite{bonanno2018game}, comprised of a list of player identifiers $I = \{0, 1, \dots, n-1\}$ (where $n \geq 2$ is the number of players), a list containing one strategy set $S_p$ per player $p \in I$, a set $O$ of possible outcomes, and a payoff function $f$.
 Each strategy set $S_p$ contains all possible strategies that player $p$ may choose; if the player controls multiple variables simultaneously, the strategy set would be the Cartesian product of their corresponding sets (i.e., for a boolean and an integer, $S_p = \{0, 1\} \times \I$).
 In Game Theory, a strategy profile is a tuple of game decisions, one or more for each player, that defines a complete game scenario.
 Any strategy profile is, thus, $s \in S$ such that $S = S_0 \times S_1 \times \dots \times S_{n-1}$.
@@ -115,6 +116,7 @@ We can model this game as shown in Table \ref{tab:prisonersdilemma}, with each p
 Both players are aware of the payoffs and make their decisions simultaneously (i.e., they do not know each other's decision until both decisions have been made).
 
 \begin{table}[h]
+\caption{Strategy profiles and their payoffs for the Prisoner's Dilemma.}
 \centering
 \begin{tabular}{|c|c|c|}
 \hline
@@ -126,22 +128,23 @@ Confess, Silent  &  0, -9 \\
 Confess, Confess & -5, -5 \\
 \hline
 \end{tabular}
-\caption{Strategy profiles and their payoffs for the Prisoner's Dilemma.}
 \label{tab:prisonersdilemma}
 \end{table}
 
 
 The procedure for ``solving'' such games is to find the NE \cite{bonanno2018game}, whose basic form is the Pure-Strategy Nash Equilibria (PSNE), defined here as a subset $E$ from $S$, and comprised of each strategy profile $s^* = (s^*_0, s^*_1, \dots, s^*_{n-1})$ such that:
 
-\begin{equation}
+\vskip-15pt
+\begin{equation*}
     \forall{p} \forall{s_p}~ f(s^*) \succeq_p f(s^*_0, \dots, s^*_{p-1}, s_p, s^*_{p+1}, \dots, s^*_{n-1})
-\end{equation}
+\end{equation*}
 
-Here, all $s_i \in S_i$ and all $s^*_j \in S_j$, and $\succeq_p$ is a relation such that $a \succeq_p b$ denotes that $p$'s perceived outcome from $a$ is preferred to that of $b$ ($a, b \in O$).
+\noindent
+where all $s_i \in S_i$ and all $s^*_j \in S_j$, and $\succeq_p$ is a relation such that $a \succeq_p b$ denotes that $p$'s perceived outcome from $a$ is preferred to that of $b$ ($a, b \in O$).
 
 There are many interpretations \cite{bonanno2018game} for an NE state $s^* \in E$, one of them being that in it, no player has an incentive to unilaterally change their decision.
 Another common interpretation is that in it all players are playing a best response to the decisions of the other players simultaneously (i.e., each is playing a ``best response to the best responses'').
-One should also note that, in a NE, no player regrets their choice even after knowing the decisions of the other players (given that all of them chose their strategy for that NE and are therefore playing a best response).
+One should also note that, in an NE, no player regrets their choice even after knowing the decisions of the other players (given that all of them chose their strategy for that NE and are therefore playing a best response).
 For all of these reasons, such equilibria are often seen as ``solutions'' to a game model, because they reflect the choices that rational players would make, as long as they are aware of the game dynamics and given that the model correctly incorporates players' preferences.
 
 For finite games, as is the case of the Prisoner's Dilemma, the PSNE can be easily found analytically.
@@ -149,23 +152,29 @@ The classic procedure can be summarized as follows.
 First, a payoff matrix like Table \ref{tab:payoffmatrix} is created with dimensions given by the sizes of the strategy sets.
 The payoff vectors are then filled in for each strategy profile.
 Next, for each player, we mark their preferred payoff for each unique combination of choices by their opponents.
-In the example, the best responses for prisoners 1 and 2 are highlighted in blue and red, respectively.
+In the example, player 0's preferred payoff to each choice by player 1 is highlighted in blue and underscored; the same was done for player 1 in red and double underscore.
 The PSNE are identified at the end of this process as the strategy profiles for which all players get their preferred payoff simultaneously (i.e., player are all playing a best response against each other).
 
 \begin{table}[h]
+    \caption{Payoff matrix for the Prisoner's Dilemma; the only Nash Equilibrium is highlighted in green.}
     \centering
     \begin{tabular}{|c|c|c|}
         \hline
         & \textbf{Silent} & \textbf{Confess} \\
         \hline
-        \textbf{Silent} & -1, -1 & -9, \colorbox{Red!25}{0} \\
+        \textbf{Silent} & {
+            \colorbox{White!25}{\makebox[1em]{\strut -1}}, \colorbox{White!25}{\makebox[1em]{\strut -1}}
+        } & {
+            \colorbox{White!25}{\makebox[1em]{\strut -9}}, \colorbox{Red!25}{\makebox[1em]{\strut\doubleunderline{0}}}
+        } \\
         \hline
-        \textbf{Confess} & \colorbox{Cyan!25}{0}, -9 & \cellcolor{LimeGreen!50}{
-            \colorbox{Cyan!25}{-5}, \colorbox{Red!25}{-5}
+        \textbf{Confess} &{
+            \colorbox{Cyan!25}{\makebox[1em]{\strut\underline{0}}}, \colorbox{White!25}{\makebox[1em]{\strut -9}}
+        } & \cellcolor{LimeGreen!50}{
+            \colorbox{Cyan!25}{\makebox[1em]{\strut\underline{-5}}}, \colorbox{Red!25}{\makebox[1em]{\strut\doubleunderline{-5}}}
         } \\
         \hline
     \end{tabular}
-    \caption{Payoff matrix for the Prisoner's Dilemma; the only Nash Equilibrium is highlighted in green.}
     \label{tab:payoffmatrix}
 \end{table}
 
@@ -181,19 +190,19 @@ The resource is an abstraction for a computational resource which the defender p
 The attacker player, on the other hand, wishes to compromise the resource.
 Only one player can control the resource at any given time; the players can make moves at any point along a continuous timeline to seize control of it.
 The more time a player spends in control of the resource, the higher their payoff (represented here as $\beta_i$ where $i=0$ denotes the defender and $i=1$ the attacker).
-Each move incurs a cost ($k_i$) that negatively impacts player $i$'s $\beta_i$.
+Each move incurs a cost ($k_i$) that negatively impacts $\beta_i$.
 
 The manner in which FlipIt is commonly solved involves defining a set of strategy classes from which the players can choose, and which in turn determine the players' move times.
 Such classes are also often parameterized, allowing for finer control over the exact move times.
 The strategy class we will focus on is the Periodic Strategy (PS), where the players move at regular intervals.
 PS is fully characterized by a scalar move rate $\alpha$, which determines the time between moves by the adopting player.
-As a consequence, a PS game of FlipIt can be modeled as a quadruple $\left (I=\left\{ 0,1 \right\}, (S_0=\Rnn, S_1=\Rnn), O=\R \times \R, f \right )$ \footnote{We use $\R$ to denote the set of real numbers, and $\Rnn$ for the set of non-negative real numbers.}.
+As a consequence, a PS game of FlipIt can be modeled as a quadruple $\left (I=\left\{ 0,1 \right\}, (S_0 \subseteq \Rnn, S_1 \subseteq \Rnn), O \subseteq \R^2, f \right )$ \footnote{We use $\R$ to denote the set of real numbers, and $\Rnn$ for the set of non-negative real numbers.}.
 The strategy sets represent each player's choices for $\alpha$, and the fact that they are infinite means that the simple, classic procedure presented in Subsection \ref{gametheory} not applicable.
-The best responses for this game could, instead, be successfully determined algebraically \cite{dijk2013flipit}, resulting in analytical expressions for $f$ and the $E$; however, the same is not true for more complex strategies for FlipIt, and/or for some of its extensions, and/or for scenarios where the opponents can choose from many different classes of strategies.
+The best responses for this game could, instead, be successfully determined algebraically \cite{dijk2013flipit}, resulting in analytical expressions for $f$ and $E$; however, the same is not true for more complex strategies for FlipIt, and/or for some of its extensions, and/or for scenarios where the opponents can choose from many different classes of strategies.
 
 Is this paper, we consider the FlipIt with Infrastructure Enhancement (IE) \cite{leite2024cec}, an extension of FlipIt where the defender can use IE to increase the resource's resilience to attacks.
-The main idea is that, for PS games of FlipIt with IE, the defender's strategy set becomes $S_0=\Rnn \times \Rnn$ to accommodate a new decision variable, $\phi$ (the amount of IE), which impacts the resource resilience to attacks, but also incurs in a one-time cost of $c\phi$ monetary units, where $c$ is a game parameter much like $k_0$ and $k_1$ mentioned earlier.
-The objective space is now $O = \R \times \R \times \R$, with an additional component accounting for the defender's new objective, maximizing $K(\phi) = -c\phi$ (i.e., minimizing monetary costs).
+The main idea is that, for PS games of FlipIt with IE, the defender's strategy set becomes $S_0=\Rnn^2$ to accommodate a new decision variable, $\phi$ (the amount of IE), which impacts the resource resilience to attacks, but also incurs in a one-time cost of $c\phi$ monetary units, where $c$ is a game parameter much like $k_0$ and $k_1$ mentioned earlier.
+The objective space is now $O = \R^3$, with an additional component accounting for the defender's new objective, maximizing $K(\phi) = -c\phi$ (i.e., minimizing monetary costs).
 Analytical expressions are determined for this case \cite{leite2024cec}, which provide us with an opportunity to validate our proposed method.
 The ideal PSNE curve and its resulting outcomes are shown in Fig.~\ref{fig:analytical_decision_space} and Fig.~\ref{fig:analytical_objective_space}, respectively.
 
@@ -228,7 +237,7 @@ It is important to note that we present both a general abstract framework (ideal
 While largely inspired by the classic Game Theory concepts, the proposed method is designed to tackle the approximation of infinite games, while still keeping it intuitive to researchers in Computational Optimization to facilitate the development of efficient numerical procedures.
 For instance, the classic method presented in Subsection \ref{gametheory} is not applicable to FlipIt with IE, as the strategy sets are infinite.
 The method we present here, on the other hand, was able to approximate the ideal curves shown in Fig.~\ref{fig:analytical_decision_space} and Fig.~\ref{fig:analytical_objective_space} with a finite number of points.
-Hopefully, both game theorists and computational optimization researchers will be able to understand the proposed procedure and help improve it.
+One of our goals while designing this procedure was to keep it simple, for example, by avoiding performance optimizations for now, so that both game theorists and researchers in Computational Optimization can immediately understand the principles behind it.
 
 We define an ``opponent strategy profile'' (OSP) as the part of the strategy profile that excludes the decisions made by a particular player.
 An OSP thus represents a unique scenario created by the other players' decisions, which cannot be forcefully changed by the player in any manner, and against which the player might potentially play.
@@ -284,11 +293,11 @@ This concept has been explicitly used for single-objective players in \cite{dijk
 The problem with the idealized procedure is that it is not feasible to run infinite independent multi-objective optimizations on digital computers.
 Moreover, each optimization is also not perfectly continuous, as even ``real'' variables are represented with a finite number of bits in a computer; although for all practical purposes we can consider them ``real'' valued.
 
-To address these limitations while still confirming the theoretical foundations of the idealized procedure, we propose a numerical procedure that discretizes the OSPs for each player, then approximates the BRDVs for each OSP using a regular multi-objective evolutionary algorithm.
-This approach avoids game-theory-specific fitness functions (see \cite{leite2024cec}, \cite{lung2008computing}, \cite{lung2020pareto}), adopting a Pareto-Front approach that should appear more intuitive to researchers in the field of computational optimization.
+To address these limitations while still confirming the theoretical foundations of the idealized procedure, we propose a numerical procedure that discretizes the OSPs for each player, then approximates the BRDVs for each OSP using a regular single-objective or multi-objective Evolutionary Algorithm (EA).
+This approach avoids game-theory-specific fitness functions (see \cite{leite2024cec}, \cite{lung2008computing}, \cite{lung2020pareto}), adopting a Pareto-Front approach that should appear more intuitive to researchers in the field of Computational Optimization.
 The PSNEs are then computed as the points from each player that are within a small arbitrary distance $\epsilon$ from a point for every other player (i.e., the intersection of the approximated BRDVs).
 
-The procedure overview is shown in Algorithm \ref{alg:approximation}.
+The procedure overview is shown in Algorithm~\ref{alg:approximation}.
 
 \begin{algorithm}[h]
     \SetAlgoLined
@@ -299,7 +308,7 @@ The procedure overview is shown in Algorithm \ref{alg:approximation}.
             \texttt{bounds} & Decision variable bounds\\
             \texttt{n\_dims} & Grid divisions per decision\\
             \texttt{n\_gens} & Number of generations\\
-            \texttt{n\_nest\_gens} & Nested generations per gen.\\
+            \texttt{n\_nest\_gens} & Nested generations\\
             \texttt{$\epsilon$} & Intersection threshold\\
         \end{tabular}
     }
@@ -328,10 +337,10 @@ The procedure overview is shown in Algorithm \ref{alg:approximation}.
     \KwOut{\\
         \begin{tabular}{ll}
             \texttt{psnes} & Approximated solutions\\
-            \texttt{fitnesses} & Fitness values for approxs.\\
+            \texttt{fits} & Fitness values for approxs.\\
         \end{tabular}
     }
-    \caption{Numerical approximation of PSNEs}
+    \caption{Numerical approximation of PSNEs.}
     \label{alg:approximation}
 \end{algorithm}
 
@@ -341,12 +350,16 @@ The procedure overview is shown in Algorithm \ref{alg:approximation}.
 \label{methodology}
 
 The game model used for the experiments was FlipIt with IE and Periodic Strategies (PS) \cite{leite2024cec}, with $φ_0=5$, $k_0=1.0$, $k_1=1.5$, and $c=0.2$.
+Game results were evaluated algebraically through the payoff functions for each player.
 The decision space was discretized into a 40x40x160 grid, with minimum and maximum bounds of 0.01 and 3.00, respectively, for the defender's $\phi$, and 0.005 and 3.00, respectively, for the defender's $\alpha_0$ and the attacker's $\alpha_1$.
-Game results were evaluated algebraically through the payoff functions for each player \cite{leite2024cec}.
+The intersection threshold $\epsilon$ was set to half the diagonal of a grid cell.
 
-NSGA-II was chosen as the multi-objective evolutionary algorithm for each BRDV approximation, even though the BRDVs for the attacker are actually single-objective problems.
-This was done to keep the experimental code short and simple, even though a single-objective algorithm could (and arguably should) be specially allocated for single-objective players.
-The algorithm was executed for 400 generations, with each nested GA running 100 generations each time.
+$(\mu+\lambda)$ Simple EA was chosen for each single-objective BRDV approximation (i.e., each attacker EA, for FlipIt with IE), while NSGA-II \cite{Deb_2002} was used for the multi-objective ones (i.e., each defender EA).
+Initial populations were uniformly distributed in each player's strategy set.
+A population size of 30 was used in all EAs, with an offspring size of 10.
+Parent selection used Binary Tournament.
+Crossover was arithmetic, allowing extrapolation up to 0.05 distance units away from the parents.
+The algorithm was executed for 400 generations, with each nested EA running 100 generations each time.
 
 
 \section{Results and Discussion}
@@ -393,7 +406,7 @@ The proposed method offers an approach that may be intuitive for researchers in 
 It should also be intuitive for researchers in the field of game theory, as the convergence criterion essentially generalizes the game-theoretical concept of ``all players playing best responses simultaneously''.
 We hope that the framework provided here can guide the development of new, more efficient methods to solve game-theoretical models of simultaneous decision and continuous decision spaces.
 
-As future work, we plan to increase the method's computational efficiency by enhancing the intersection-computing algorithm, allowing for a finer grid, faster convergence, and, hopefully, a larger and less noisy set of estimations.
+As future works, we plan to increase the method's computational efficiency by enhancing the intersection-computing algorithm, allowing for a finer grid, faster convergence, and, hopefully, a larger and less noisy set of estimations.
 
 \bibliographystyle{plain}
 \bibliography{symposium}
