@@ -68,6 +68,11 @@ Graduate School of Medicine, Science and Technology, Shinshu University
 \kanjiskip=.1zw plus 3pt minus 3pt
 \xkanjiskip=.1zw plus 3pt minus 3pt
 
+% Abstract (200 words max.)
+% In this paper, we present a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions even when the objective space is continuous and may contain an infinite number of solutions.
+% The proposed method shall appear intuitive to researchers in Game Theory, because it generalizes the basic analytical methods, but also to researchers in Computational Optimization, because it leverages concepts of this field to transform an otherwise infinite problem into a finite set of optimization ones.
+% Through experimental validation with a cybersecurity game model, we demonstrate the method's convergence to a finite but representative number of game solutions, and discuss the many possible future improvements.
+
 \section{Introduction}
 
 In modern cybersecurity contexts, situations such as Advanced Persistent Threats (APT) have highlighted the limitations of traditional defense mechanisms, underscoring the need for proactive strategies that assume eventual breaches.
@@ -75,14 +80,14 @@ Game-theoretical models are developed in this domain with the goal of deriving p
 In particular, FlipIt \cite{dijk2013flipit} is one such model, simulating stealthy takeovers of a resource being contested by two adversarial agents: a defender and an attacker.
 
 Players have objectives, which are usually conflicting.
-The goal of the analyst is to find the so called Nash Equilibria (NE) of the game \cite{bonanno2018game}, which are states where all players successfully maximize their payoffs given the strategies of the other players.
+The goal of the analyst is to find the Nash Equilibria (NE) of the game, which are states (often considered ``game solutions'' \cite{bonanno2018game}) where all players successfully maximize their payoffs given the strategies of the other players.
 This is not equivalent to treating a game model as a Multi-Objective Optimization Problem (MOOP), as the players are not cooperating towards a common global optimal, but rather are more prone to sabotage each other's efforts; for this reason, games require dedicated optimization methods.
 
 Recent extensions of FlipIt incorporate multi-objective and continuous strategy spaces, enabling more complex models that better reflect real-world cyber scenarios.
 For instance, our previous approach \cite{leite2024cec} introduced infrastructure enhancements, which model the benefits of passive defenses like firewalls.
 However, such extensions increasingly complicate the determination of NE to the point where analytical and even existing numerical methods become impractical.
 This is why we also explored the use of Co-Evolutionary Algorithms (CoEA) for estimating solutions.
-To the best of our knowledge, until the present work, no other numerical method has been demonstrated for solving continuous games of simultaneous decision with multi-objective players and an infinite number of solutions.
+To the best of our knowledge, no other numerical method had been demonstrated for solving continuous games of simultaneous decision with multi-objective players and an infinite number of solutions.
 On the other hand, while effective, this approach presented challenges in terms of architectural complexity and noisy estimations.
 
 In this paper, we present a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions even when the objective space is continuous and may therefore potentially contain an infinite number of game solutions.
@@ -157,7 +162,7 @@ The PSNE are identified at the end of this process as the strategy profiles for 
 In our example, the only PSNE is $(\texttt{Confess}, \texttt{Confess})$.
 
 \begin{table}[h]
-    \caption{Payoff matrix for the Prisoner's Dilemma; the only Nash Equilibrium is highlighted in green.}
+    \caption{Payoff matrix for the Prisoner's Dilemma; the only Nash Equilibrium is the highlighted cell.}
     \centering
     \begin{tabular}{|c|c|c|}
         \hline
@@ -186,9 +191,8 @@ In our example, the only PSNE is $(\texttt{Confess}, \texttt{Confess})$.
 The problem with this procedure is that it is not feasible for continuous games, as the number of possible strategy profiles is infinite.
 This is the case for FlipIt \cite{dijk2013flipit} and its extensions \cite{laszka2014flipthem} \cite{sherfield2018flipthem}.
 
-In the original FlipIt game, two players ($I = \left\{ 0, 1 \right\}$) compete for control of a resource.
-The resource is an abstraction for a computational resource which the defender player wishes to protect, such as a computer, a network or a password.
-The attacker player, on the other hand, wishes to compromise the resource.
+In the original FlipIt game, two players ($I = \left\{ 0, 1 \right\}$) compete for control of a ``resource'', which is an abstraction for a computational resource which the defender player wishes to protect, such as a computer, a network or a password.
+The attacker player, on the other hand, wishes to compromise it.
 Only one player can control the resource at any given time; the players can make moves at any point along a continuous timeline to seize control of it.
 The more time a player spends in control of the resource, the higher their payoff (represented here as $\beta_i$ where $i=0$ denotes the defender and $i=1$ the attacker).
 Each move incurs a cost ($k_i$) that negatively impacts $\beta_i$.
@@ -199,7 +203,7 @@ The strategy class we will focus on is the Periodic Strategy (PS), where the pla
 PS is fully characterized by a scalar move rate $\alpha_i$, which determines the time between moves by the adopting player.
 As a consequence, a PS game of FlipIt can be modeled as a quadruple $\left (I=\left\{ 0,1 \right\}, (S_0 \subseteq \Rnn, S_1 \subseteq \Rnn), O \subseteq \R^2, f \right )$ \footnote{We use $\R$ to denote the set of real numbers, and $\Rnn$ for the set of non-negative real numbers.}.
 The strategy sets represent each player's choices for $\alpha_i$, and the fact that they are infinite means that the simple, classic procedure presented in Subsection \ref{gametheory} is not applicable.
-The best responses for this game could, instead, be successfully determined algebraically \cite{dijk2013flipit}, resulting in analytical expressions for $f$ and $E$; however, the same is not true for more complex strategies for FlipIt, and/or for some of its extensions, and/or for scenarios where the opponents can choose from many different classes of strategies.
+The best responses for this game were, instead, successfully determined algebraically \cite{dijk2013flipit}, resulting in analytical expressions for $f$ and $E$; however, the same is not true for more complex strategies for FlipIt, and/or for some of its extensions, and/or for scenarios where the opponents can choose from many different classes of strategies.
 
 Is this paper, we consider the FlipIt with Infrastructure Enhancement (IE) \cite{leite2024cec}, an extension of FlipIt where the defender can use IE to increase the resource's resilience to attacks.
 The main idea is that, for PS games of FlipIt with IE, the defender's strategy set becomes $S_0=\Rnn^2$ to accommodate a new decision variable, $\phi$ (the amount of IE), which impacts the resource resilience to attacks, but also incurs in a one-time cost of $c\phi$ monetary units, where $c$ is a game parameter much like $k_0$ and $k_1$ mentioned earlier.
@@ -209,16 +213,14 @@ The ideal PSNE curve and its resulting outcomes are shown in Fig.~\ref{fig:analy
 
 \begin{figure}[h]
     \centering
-    % Converted with: pdftops -eps figs/analytical_curve_decision_space.pdf
-    \includegraphics[width=0.9\linewidth]{figs/analytical_curve_decision_space.eps}
+    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_psne_decision_space.eps}
     \caption{Analytical PSNE curve for FlipIt with IE.}
     \label{fig:analytical_decision_space}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    % Converted with: pdftops -eps figs/analytical_curve_objective_space.pdf
-    \includegraphics[width=0.9\linewidth]{figs/analytical_curve_objective_space.eps}
+    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_psne_objective_space.eps}
     \caption{Payoff for the PSNE curve.}
     \label{fig:analytical_objective_space}
 \end{figure}
@@ -279,8 +281,7 @@ In this case, the BRDVs form a 3D surface for each player.
 
 \begin{figure}[h]
     \centering
-    % Converted with: pdftops -eps figs/approx_surface_decision_space.pdf
-    \includegraphics[width=0.9\linewidth]{figs/approx_surface_decision_space.eps}
+    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_analytical_surfaces.eps}
     \caption{Decision space for FlipIt with IE with approximated BRDVs for the defender plotted in blue and those for the attacker in red.}
     \label{fig:approx_surface}
 \end{figure}
@@ -297,7 +298,7 @@ Moreover, each optimization is also not perfectly continuous, as even ``real'' v
 To address these limitations while still confirming the theoretical foundations of the idealized procedure, we propose a numerical procedure that discretizes the OSPs for each player, then approximates the BRDVs for each OSP using a regular single-objective or multi-objective Evolutionary Algorithm (EA).
 To do so, we divide the decision space into a grid with a user-specified number of divisions per decision variable, compute the grid centers, and use opponent-controlled variable values from these centers as OSPs.
 This approach avoids game-theory-specific fitness functions (see \cite{leite2024cec}, \cite{lung2008computing}, \cite{lung2020pareto}), adopting a Pareto-Front approach that should appear more intuitive to researchers in the field of Computational Optimization.
-The PSNEs are then computed as the points from each player that are within a small arbitrary distance $\epsilon$ from a point for every other player (i.e., the intersection of the approximated BRDVs).
+The PSNEs are then computed as the points from each player that are within a small arbitrary distance $\epsilon$ from a point from every other player (i.e., the intersection of the approximated BRDVs).
 
 The procedure overview is shown in Algorithm~\ref{alg:approximation}.
 The algorithm receives as inputs the player data (such as the number of decisions and objectives), the upper and lower bounds for the decision variables, the number of grid divisions per decision variable, the number of outer loops to perform, the number of nested EA generations, and the intersection threshold $\epsilon$.
@@ -365,7 +366,7 @@ Game results were evaluated algebraically through the payoff functions for each 
 The decision space was discretized into a 40x40x160 grid, with minimum and maximum bounds of 0.01 and 3.00, respectively, for the defender's $\phi$, and 0.005 and 3.00, respectively, for the defender's $\alpha_0$ and the attacker's $\alpha_1$.
 The intersection threshold $\epsilon$ was set to half the diagonal of a grid cell.
 
-$(\mu+\lambda)$ Simple EA was chosen for each single-objective BRDV approximation (i.e., each attacker EA, for FlipIt with IE), while NSGA-II \cite{Deb_2002} was used for the multi-objective ones (i.e., each defender EA).
+$(\mu+\lambda)$ Simple EA \cite{Coello_2013} was chosen for each single-objective BRDV approximation (i.e., each attacker EA, for FlipIt with IE), while NSGA-II \cite{Deb_2002} was used for the multi-objective ones (i.e., each defender EA).
 Initial populations were uniformly distributed in each player's strategy set.
 A population size of 30 was used in all EAs, with an offspring size of 10.
 Parent selection used Binary Tournament.
@@ -384,16 +385,14 @@ Fig.~\ref{fig:approx_fitness} shows the fitness values for each approximated PSN
 
 \begin{figure}[h]
     \centering
-    % Converted with: pdftops -eps figs/approx_psne_decision_space.pdf
-    \includegraphics[width=0.9\linewidth]{figs/approx_psne_decision_space.eps}
+    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_population_decision_space.eps}
     \caption{Approximated PSNEs for FlipIt with IE and PS shown as dots; the continuous line represents the ideal PSNE curve.}
     \label{fig:approx_psne}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    % Converted with: pdftops -eps figs/approx_psne_objective_space.pdf
-    \includegraphics[width=0.9\linewidth]{figs/approx_psne_objective_space.eps}
+    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_population_objective_space.eps}
     \caption{Fitness of the solutions found vs. the ideal fitness curve.}
     \label{fig:approx_fitness}
 \end{figure}
@@ -421,6 +420,8 @@ We hope that the framework provided here can guide the development of new, more 
 As future works, we plan to increase the method's computational efficiency by enhancing the intersection-computing algorithm and by dynamically allocating resources to the EAs (e.g., population size, offspring size, number of generations) based on criteria such as convergence and distance to opponent populations.
 We also plan to fully investigate the effects of increasing the grid resolution, especially in a dynamic manner as the nested EAs start to converge and therefore to reveal the regions of interest in the decision space.
 These improvements may allow for a finer grid, faster convergence, larger population sizes and, hopefully, a larger and more accurate set of estimations.
+Initial experiments in this direction have already shown promising results.
+Finally, we also plan to extend this method to be able to investigate adaptive strategies for FlipIt.
 
 \bibliographystyle{plain}
 \bibliography{symposium}
