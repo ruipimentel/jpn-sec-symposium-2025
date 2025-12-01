@@ -83,28 +83,31 @@ Pontifícia Universidade Católica do Paraná (PUCPR)
 
 \section{Introduction}
 
-In modern cybersecurity contexts, situations such as Advanced Persistent Threats (APT) have highlighted the limitations of traditional defense mechanisms, underscoring the need for proactive strategies that assume eventual breaches.
-Game-theoretical models are developed in this domain with the goal of deriving policy best practices from the so called ``game solutions''.
-In particular, FlipIt \cite{dijk2013flipit} is one such model, simulating stealthy takeovers of a resource being contested by two adversarial agents: a defender and an attacker.
+Advanced Persistent Threats are sophisticated, long-term cyberattacks where adversaries infiltrate a computer infrastructure and remain undetected for extended periods, aiming to steal sensitive data or cause significant damage.
+They led to a shift in cybersecurity paradigms, emphasizing the importance of proactive defense strategies that assume that breaches might occur undetected.
+In this context, game theory has been increasingly applied to model the interactions between attackers and defenders.
+FlipIt \cite{dijk2013flipit} is a prominent example of such a game-theoretical model, specifically designed to capture the dynamics of stealthy cyberattacks and defenses with the intent of improving cybersecurity policies.
 
-Players have objectives, which are usually conflicting.
-The goal of the analyst is to find the Nash Equilibria (NE) of the game, which are states (often considered ``game solutions'' \cite{bonanno2018game}) where all players successfully maximize their payoffs given the strategies of the other players.
-This is not equivalent to treating a game model as a Multi-Objective Optimization Problem (MOOP), as the players are not cooperating towards a common global optimal, but rather are more prone to sabotage each other's efforts; for this reason, games require dedicated optimization methods.
+The goal of game-theoretical analysis is to find the Nash Equilibria (NE) of the game.
+NE are states where all players successfully maximize their payoffs given the strategies of the other players, and are often considered ``game solutions'' \cite{bonanno2018game}.
+A game is not a pure Multi-Objective Optimization Problem (MOOP), as the players are not cooperating towards a common global optimum.
+Games require dedicated solution methods, since each player controls some of the decision variables, and all decisions influence all players' outcomes.
+In situations like this, conflicts are likely to arise.
 
-Recent extensions of FlipIt incorporate multi-objective and continuous strategy spaces, enabling more complex models that better reflect real-world cyber scenarios.
-For instance, our previous approach \cite{leite2024cec} introduced infrastructure enhancements, which model the benefits of passive defenses like firewalls.
-However, such extensions increasingly complicate the determination of NE to the point where analytical and even existing numerical methods become impractical.
-This is why we also explored the use of Co-Evolutionary Algorithms (CoEA) for estimating solutions.
-To the best of our knowledge, no other numerical method had been demonstrated for solving continuous games of simultaneous decision with multi-objective players and an infinite number of solutions.
-On the other hand, while effective, this approach presented challenges in terms of architectural complexity and noisy estimations.
+FlipIt with Infrastructure Enhancement (IE) \cite{leite2024cec} is an extension of FlipIt that incorporates multi-objective players and continuous strategy spaces, enabling more complex models that better reflect real-world cyber scenarios.
+Finding NE via algebra in these cases gets increasingly complicated with the complexity.
+This is why numerical methods are often preferred.
+Co-Evolutionary Algorithms (CoEA) were used for estimating solutions for FlipIt with IE by evolving populations of decision-variable values concurrently \cite{leite2024cec}.
+This approach led to very accurate approximations, but presented challenges in terms of architectural complexity and diversity of estimations.
+Another work \cite{leite2024jpnsec} proposed a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions by decomposing the decision space into a grid of MOOPs.
+This framework generalizes the basic analytical methods from game theory and leverages concepts of evolutionary computation to transform an otherwise infinite problem into a finite set of optimization ones; however, the computational cost grows non-linearly with the grid resolution.
+Finally, in \cite{leite2025gecco} a simpler CoEA architecture was proposed that searches for a single NE per run, incorporating special requirements to ensure future applicability in a coordinating process to find multiple equilibria in a single run.
 
-In this paper, we present a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions even when the objective space is continuous and may therefore potentially contain an infinite number of game solutions.
-The proposed method shall appear intuitive to researchers in Game Theory, because it generalizes the basic analytical methods, but also to researchers in Computational Optimization, because it leverages concepts of this field to transform an otherwise infinite problem into a finite set of optimization ones.
-Through experimental validation, we demonstrate the method's convergence to a finite but representative number of game solutions, with noise being expected to decrease as more computing resources are allocated.
+In this paper, we propose a novel evolutionary algorithm ranking scheme for solving game-theorical models of simultaneous decision, continuous decision spaces, and any number of players and solutions.
+The ranking procedure is based on the continuous patching of individual ranks over generations, instead of instantaneous fitness relations between individuals.
+This method was designed to achieve a good balance between computational efficiency and solution diversity.
 
-Beyond the concrete basic algorithmic implementation demonstrated in this work, the proposed method contributes a general abstract procedure, which we hope will guide the development of new, more efficient methods for solving game theory models involving simultaneous decisions, continuous decision spaces, and any number of players and solutions, with applications beyond FlipIt.
-
-The remainder of this paper is organized as follows: Section \ref{relatedworks} reviews related works; Section \ref{algorithm} describes the proposed abstract and concrete procedures; Section \ref{methodology} presents the experimental setup; Section \ref{results} discusses our findings; and Section \ref{conclusions} concludes with potential avenues for future research.
+The remainder of this paper is organized as follows: Section \ref{relatedworks} reviews related works; Section \ref{algorithm} describes the proposed method; Section \ref{methodology} presents the experimental setup; Section \ref{results} discusses our findings; and Section \ref{conclusions} concludes with potential avenues for future research.
 
 
 \section{Related Works}
@@ -114,38 +117,12 @@ The remainder of this paper is organized as follows: Section \ref{relatedworks} 
 \subsection{Game Theory and Nash Equilibria}
 \label{gametheory}
 
-Games with simultaneous decisions by all players can be modeled by a quadruple $\left (I, (S_0, S_1, \dots, S_{n-1}), O, f \right )$ \cite{bonanno2018game}, comprised of a list of player identifiers $I = \{0, 1, \dots, n-1\}$ (where $n \geq 2$ is the number of players), a list containing one strategy set $S_p$ per player $p \in I$, a set $O$ of possible outcomes, and a payoff function $f$.
-Each strategy set $S_p$ contains all possible strategies that player $p$ may choose; if the player controls multiple variables simultaneously, the strategy set would be the Cartesian product of their corresponding sets (i.e., for a boolean and an integer, $S_p = \{0, 1\} \times \I$).
-In Game Theory, a strategy profile is a tuple of game decisions, one or more for each player, that defines a complete game scenario.
-Any strategy profile is, thus, $s \in S$ such that $S = S_0 \times S_1 \times \dots \times S_{n-1}$.
-We can think of a strategy profile as the input vector for a game evaluation, which is performed by $f: S \rightarrow O$ and outputs the payoff vector ($o \in O$) containing game results for all players.
-
-As an example, let us consider a famous discrete, single-objective game of simultaneous decision called the Prisoner's Dilemma \cite{tucker1983mathematics}, where each of two prisoners (the players) can choose between remaining silent or betraying the other prisoner (their accomplice) by confessing their crime.
-Their sole objective is to minimize their own sentence.
-The authorities have enough evidence to convict both prisoners of a minor crime, but they need a confession to convict them of a major crime, so they offer each player (separately) the following deal: if the prisoner confesses, they will be released as long as the other player remains silent, while the latter will be convicted of the major crime.
-If both confess, they will both be convicted of the major crime, though with a slightly reduced sentence for cooperating.
-If both remain silent, they will both be convicted of the minor crime.
-We can model this game as shown in Table \ref{tab:prisonersdilemma}, with each player trying to maximize their payoff.
-Both players are aware of the payoffs and make their decisions simultaneously (i.e., they do not know each other's decision until both decisions have been made).
-
-\begin{table}[h]
-\caption{Strategy profiles and their payoffs for the Prisoner's Dilemma.}
-\centering
-\begin{tabular}{|c|c|c|}
-\hline
-\textbf{Strategy profile} & \textbf{Payoff vector} \\
-\hline
-Silent,  Silent  & -1, -1 \\
-Silent,  Confess & -9,  0 \\
-Confess, Silent  &  0, -9 \\
-Confess, Confess & -5, -5 \\
-\hline
-\end{tabular}
-\label{tab:prisonersdilemma}
-\end{table}
-
-
-The procedure for ``solving'' such games is to find the NE \cite{bonanno2018game}, whose basic form is the Pure-Strategy Nash Equilibria (PSNE), defined here as a subset $E$ from $S$, and comprised of each strategy profile $s^* = (s^*_0, s^*_1, \dots, s^*_{n-1})$ such that:
+Games where decisions are taken simultaneously by all players can be modeled by a quadruple $\left (I, (S_0, S_1, \dots, S_{n-1}), O, f \right )$ \cite{bonanno2018game}.
+$I = \{0, 1, \dots, n-1\}$ is a list of player identifiers (where $n \geq 2$ is the number of players).
+$S_p$ is player $p$'s strategy set (with $p \in I$), that is, the set of all possible decisions that player $p$ can take.
+$O$ is the set of possible outcomes, and $f: S \rightarrow O$ is the payoff function, where $S = S_0 \times S_1 \times \dots \times S_{n-1}$.
+In game theory, a strategy profile is a tuple $s \in S$ of game decisions by all players that defines a complete game scenario.
+The basic solution for such games is the Pure-Strategy Nash Equilibria (PSNE) \cite{bonanno2018game}, defined here as a subset $E \subseteq S$ comprised of each strategy profile $s^* = (s^*_0, s^*_1, \dots, s^*_{n-1})$ such that:
 
 \vskip-15pt
 \begin{equation*}
@@ -153,283 +130,218 @@ The procedure for ``solving'' such games is to find the NE \cite{bonanno2018game
 \end{equation*}
 
 \noindent
-where all $s_i \in S_i$ and all $s^*_j \in S_j$, and $\succeq_p$ is a relation such that $a \succeq_p b$ denotes that $p$'s perceived outcome from $a$ is preferred to that of $b$ ($a, b \in O$).
+where each $s_p \in S_p$ and each $s^*_p \in S_p$, and $\succeq_p$ is a relation such that $f(a) \succeq_p f(b)$ denotes that $p$'s perceived outcome from $a$ is preferred to that of $b$.
 
-There are many interpretations \cite{bonanno2018game} for an NE state $s^* \in E$, one of them being that in it, no player has an incentive to unilaterally change their decision.
-Another common interpretation is that in it all players are playing a best response to the decisions of the other players simultaneously (i.e., each is playing a ``best response to the best responses'').
-One should also note that, in an NE, no player regrets their choice even after knowing the decisions of the other players (given that all of them chose their strategy for that NE and are therefore playing a best response).
-For all of these reasons, such equilibria are often seen as ``solutions'' to a game model, because they reflect the choices that rational players would make, as long as they are aware of the game dynamics and given that the model correctly incorporates players' preferences.
-
-For finite games, as is the case of the Prisoner's Dilemma, the PSNE can be easily found analytically.
-The classic procedure can be summarized as follows.
-First, a payoff matrix like Table \ref{tab:payoffmatrix} is created with dimensions given by the sizes of the strategy sets.
-The payoff vectors are then filled in for each strategy profile.
-Next, for each player, we mark their preferred payoff for each unique combination of choices by their opponents.
-In the example, player 0's preferred payoff to each choice by player 1 is highlighted in blue and underscored; the same was done for player 1 in red and double underscore.
-The PSNE are identified at the end of this process as the strategy profiles for which all players get their preferred payoff simultaneously (i.e., players are all playing a best response against each other).
-In our example, the only PSNE is $(\texttt{Confess}, \texttt{Confess})$.
-
-\begin{table}[h]
-    \caption{Payoff matrix for the Prisoner's Dilemma; the only Nash Equilibrium is the highlighted cell.}
-    \centering
-    \begin{tabular}{|c|c|c|}
-        \hline
-        & \textbf{Silent} & \textbf{Confess} \\
-        \hline
-        \textbf{Silent} & {
-            \colorbox{White!25}{\makebox[1em]{\strut -1}}, \colorbox{White!25}{\makebox[1em]{\strut -1}}
-        } & {
-            \colorbox{White!25}{\makebox[1em]{\strut -9}}, \colorbox{Red!25}{\makebox[1em]{\strut\doubleunderline{0}}}
-        } \\
-        \hline
-        \textbf{Confess} &{
-            \colorbox{Cyan!25}{\makebox[1em]{\strut\underline{0}}}, \colorbox{White!25}{\makebox[1em]{\strut -9}}
-        } & \cellcolor{LimeGreen!50}{
-            \colorbox{Cyan!25}{\makebox[1em]{\strut\underline{-5}}}, \colorbox{Red!25}{\makebox[1em]{\strut\doubleunderline{-5}}}
-        } \\
-        \hline
-    \end{tabular}
-    \label{tab:payoffmatrix}
-\end{table}
-
+Nash equilibria reflect the choices that rational players could take, and are thus often seen as ``solutions'' to a game model, as long as the players are aware of the game dynamics and the model properly incorporates players' preferences.
+For finite games, the PSNE can usually be found analytically by basically evaluating all possible strategy profiles exhaustively.
+For games with continuous strategy sets, however, this is not feasible, and numerical methods are used to approximate the equilibria in order to avoid complex exact algebraic derivations.
 
 
 \subsection{FlipIt and its Extensions}
 
-The problem with this procedure is that it is not feasible for continuous games, as the number of possible strategy profiles is infinite.
-This is the case for FlipIt \cite{dijk2013flipit} and its extensions \cite{laszka2014flipthem} \cite{sherfield2018flipthem}.
+In the original FlipIt game \cite{dijk2013flipit}, two players ($I = \left\{ 0, 1 \right\}$) compete for control of a computational resource, which may represent a computer, a network, a password, etc.
+The players can make moves at any time along a continuous timeline; the last player to have moved at any given time controls the resource.
+The longer a player stays in control of the resource, the higher their payoff $\beta_i$, where $i=0$ denotes the defender and $i=1$ the attacker.
+However, each move incurs a cost ($k_i$) that negatively impacts $\beta_i$.
 
-In the original FlipIt game, two players ($I = \left\{ 0, 1 \right\}$) compete for control of a ``resource'', which is an abstraction for a computational resource which the defender player wishes to protect, such as a computer, a network or a password.
-The attacker player, on the other hand, wishes to compromise it.
-Only one player can control the resource at any given time; the players can make moves at any point along a continuous timeline to seize control of it.
-The more time a player spends in control of the resource, the higher their payoff (represented here as $\beta_i$ where $i=0$ denotes the defender and $i=1$ the attacker).
-Each move incurs a cost ($k_i$) that negatively impacts $\beta_i$.
+To solve FlipIt algebraically, usually a set of ``strategy classes'' is defined which indirectly determine the players' move times.
+By choosing a strategy class and its parameters, players gain finer control over the move times.
+In this work, we adopt the Periodic Strategy (PS), where player $p$'s moves are spaced equally according to a scalar parameter $\alpha_p$ called ``move rate''.
+A PS game of FlipIt can then be modeled as a quadruple $\left (I=\left\{ 0,1 \right\}, (S_0 \subseteq \Rnn, S_1 \subseteq \Rnn), O \subseteq \R^2, f \right )$, where $\R$ denotes the set of real numbers, and $\Rnn$ the set of non-negative real numbers.
+The continuous strategy set $S_p$ holds player $p$'s choices for $\alpha_p$.
+Algebraic expressions for $f$ and $E$ were successfully determined for this case \cite{dijk2013flipit}; however, for more complex cases for FlipIt or its extensions \cite{laszka2014flipthem} \cite{sherfield2018flipthem}, analytical solutions are not always feasible.
 
-The manner in which FlipIt is commonly solved involves defining a set of strategy classes from which the players can choose, and which in turn determine the players' move times.
-Such classes are also often parameterized, allowing for finer control over the exact move times.
-The strategy class we will focus on is the Periodic Strategy (PS), where the players move at regular intervals.
-PS is fully characterized by a scalar move rate $\alpha_i$, which determines the time between moves by the adopting player.
-As a consequence, a PS game of FlipIt can be modeled as a quadruple $\left (I=\left\{ 0,1 \right\}, (S_0 \subseteq \Rnn, S_1 \subseteq \Rnn), O \subseteq \R^2, f \right )$ \footnote{We use $\R$ to denote the set of real numbers, and $\Rnn$ for the set of non-negative real numbers.}.
-The strategy sets represent each player's choices for $\alpha_i$, and the fact that they are infinite means that the simple, classic procedure presented in Subsection \ref{gametheory} is not applicable.
-The best responses for this game were, instead, successfully determined algebraically \cite{dijk2013flipit}, resulting in analytical expressions for $f$ and $E$; however, the same is not true for more complex strategies for FlipIt, and/or for some of its extensions, and/or for scenarios where the opponents can choose from many different classes of strategies.
-
-Is this paper, we consider the FlipIt with Infrastructure Enhancement (IE) \cite{leite2024cec}, an extension of FlipIt where the defender can use IE to increase the resource's resilience to attacks.
-The main idea is that, for PS games of FlipIt with IE, the defender's strategy set becomes $S_0=\Rnn^2$ to accommodate a new decision variable, $\phi$ (the amount of IE), which impacts the resource resilience to attacks, but also incurs in a one-time cost of $c\phi$ monetary units, where $c$ is a game parameter much like $k_0$ and $k_1$ mentioned earlier.
-The objective space is now $O = \R^3$, with an additional component accounting for the defender's new objective, maximizing $K(\phi) = -c\phi$ (i.e., minimizing monetary costs).
-Analytical expressions are determined for this case \cite{leite2024cec}, which provide us with an opportunity to validate our proposed method.
-The ideal PSNE curve and its resulting outcomes are shown in Fig.~\ref{fig:analytical_decision_space} and Fig.~\ref{fig:analytical_objective_space}, respectively.
+Is this paper, we consider a multi-objective extension called FlipIt with Infrastructure Enhancement (IE) \cite{leite2024cec}.
+In FlipIt with IE, the defender has an additional decision variable $\phi$ that represents the IE level, which increases the resource's resilience to attacks.
+Thus, the defender's strategy set becomes $S_0=\Rnn^2$ with PS.
+The defender also becomes multi-objective; in addition to maximizing $\beta_0$, maximizing the financial economy $K(\phi) = -c\phi$ is also desired, where $c$ is a game parameter similar to the previously mentioned $k_0$ and $k_1$.
+In other words, the objective space is now $O = \R^3$.
+The algebraic solution available in \cite{leite2024cec} will be used to conduct the experiments with our algorithm; 
+The algebraically-determined PSNE curve is shown in Fig.~\ref{fig:analytical_decision_space}.
+Fig.~\ref{fig:analytical_objective_space} shows its game outcomes.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_psne_decision_space.eps}
+    \includegraphics[width=0.7\linewidth]{figs/pop100x20_500x5g_tanned-P01-K01_01_9236fdb_22_ds.eps}
     \caption{Analytical PSNE curve for FlipIt with IE.}
     \label{fig:analytical_decision_space}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_psne_objective_space.eps}
+    \includegraphics[width=0.7\linewidth]{figs/pop100x20_500x5g_tanned-P01-K01_01_9236fdb_22_os.eps}
     \caption{Payoff for the PSNE curve.}
     \label{fig:analytical_objective_space}
 \end{figure}
 
-A computational approach leveraging CoEAs was first proposed by \cite{sherfield2018flipthem}.
-His method leverages one population of defender strategies and one population of attacker strategies, which are co-evolved to find a PSNE.
-However, it could not be immediately generalized to multi-objective players, especially when the number of solutions is infinite.
-Other authors presented a method for solving continuous games of simultaneous decision which could, theoretically, be generalized to accommodate multi-objective players, and was tailored to find many solutions \cite{lung2008computing} \cite{lung2020pareto}; however, in our tests with FlipIt with IE, it only converged to one equilibrium.
-This method also uses concepts that are not familiar to researchers in Game Theory or Computational Optimization, which may hinder its adoption by the community.
-
+%----------------------------------------------------------------------------------------
 
 \section{Proposed Approach}
 \label{algorithm}
 
-The proposed approach aims to solve continuous games of simultaneous decision, where each player seeks to maximize their payoff (greedy players).
-It is important to note that we present both a general abstract framework (idealized procedure) and a concrete implementation (approximation procedure) for numerically solving such games.
-While largely inspired by the classic Game Theory concepts, the proposed method is designed to tackle the approximation of infinite games, while still keeping it intuitive to researchers in Computational Optimization to facilitate the development of efficient numerical procedures.
-For instance, the classic method presented in Subsection \ref{gametheory} is not applicable to FlipIt with IE, as the strategy sets are infinite.
-The method we present here, on the other hand, was able to approximate the ideal curves shown in Fig.~\ref{fig:analytical_decision_space} and Fig.~\ref{fig:analytical_objective_space} with a finite number of points.
-One of our goals while designing this procedure was to keep it simple, for example, by avoiding performance optimizations for now, so that both game theorists and researchers in Computational Optimization can immediately understand the principles behind it.
+In the decision-variable CoEA by Leite et al. \cite{leite2024cec}, a fitness composed of a single scalar was computed for each decision-variable value, and a simple proportional selection scheme was used to select the best values during evolution.
+In the MOEA grid-based framework \cite{leite2024jpnsec} and the single-PSNE CoEA approach \cite{leite2025gecco} by the same authors, MOEAs were used to solve player problems as part of the process of finding PSNE, guided by the Pareto-dominance relation.
 
-We define an ``opponent strategy profile'' (OSP) as the part of the strategy profile that excludes the decisions made by a particular player.
-An OSP thus represents a unique scenario created by the other players' decisions, which cannot be forcefully changed by the player in any manner, and against which the player might potentially play.
-In the Prisoner's Dilemma, player 0 has two OSPs: player 1 is silent, or player 1 confesses.
-Symmetrically, there are two OSPs for player 1.
-From the standpoint of any particular player, we can thus think of strategy profiles as combinations of this player's decisions with the OSPs.
+What all of these approaches have in common is the use of traditional ranking concepts to drive the search, be this search for a single- or multi-objective optimization as a part of the PSNE search, or be it directly for the PSNE search itself.
+For example, for single-objective optimization, solutions are ranked based simply on their fitness values: better fitness means better rank.
+When the non-dominated sorting concept present in NSGA-II \cite{Deb_2002} was used, the rank is computed based on traditional Pareto-dominance between solutions.
+In any case, better-ranked solutions are prioritized in the survival selection and the subsequent parent selection.
+That is to say that the ranks reflect the immediate relations between the solutions in the generation in terms of fitness, and this (instantaneous) status drives the evolutionary process.
 
-The procedure for solving a game begins by determining each player's best response, which can be generalized as finding the player's decision vectors that optimize their objectives for each OSP.
-In the case of the Prisoner's Dilemma, the best response decision vector (BRDV) for player 0 is $(\texttt{Confess})$ for OSP $(\texttt{Silent})$, and also $(\texttt{Confess})$ for OSP $(\texttt{Confess})$.
-Similarly, the BRDV for player 1 is always $(\texttt{Confess})$.
+In the proposed Genetic Algorithm (GA), each individual in the population consists of a complete strategy profile, i.e., a concatenation of decision-variable values for all players in the game.
+Each individual represents a \textit{candidate PSNE}, or, in other words, a PSNE estimate.
+In this sense, the fitness function must evaluate how close an individual is to being a true PSNE.
 
-Each PSNE can be understood as a strategy profile from which no player has any reason to deviate.
-From each player's perspective, this occurs for three main reasons.
-First, because in such a state, the player is already playing a BRDV against the OSP they perceive.
-In our example, many people instinctively believe that $(\texttt{Silent}, \texttt{Silent})$ is the optimal solution, but we observe that neither player plays a BRDV in this profile, so both are naturally inclined to deviate from it.
-In $(\texttt{Confess}, \texttt{Confess})$, however, both are playing a BRDV, so there is no expectation of a payoff increase for that OSP.
-Second, even if there are other BRDVs available for that same OSP, switching to them would modify the OSP seen by the opponents, potentially resulting in them no longer playing a BRDV, thus rendering this new strategy profile unstable (as per the first rule).
-And third, in games with strictly greedy players, any changes that depend on OSP modifications must necessarily lead the involved opponents to a better outcome, as even an equivalent payoff would not sufficiently incentivize them to cooperate, let alone a smaller payoff.
-Even a higher payoff may still not guarantee cooperation if the resulting strategy profile is unstable.
-For instance, even though player 1 perceives $(\texttt{Silent}, \texttt{Confess})$ as the most advantageous strategy profile, player 1 has no actual tool to convince player 0 to play $(\texttt{Silent})$, as in this game the latter would always be better off playing $(\texttt{Confess})$.
-As a consequence, the sole solution is $(\texttt{Confess}, \texttt{Confess})$, meaning that this is the only way rational players are expected to play under the premise that they are greedy.
+Leite et al. \cite{leite2024jpnsec} define the Opponent Strategy Profile (OSP) for a given player as the strategy profile composed of the decision-variable values of all other players except the given player.
+Each player's Best Response Decision Variable (BRDV) is defined as the tuple of decision-variable values that maximize the player's payoff for a given OSP.
+To evaluate the fitness for each candidate, we spawn one EA per candidate and per player in the game.
+Each EA is fed the OSP defined by the other players' decision-variable values in the candidate, and tasked with finding the BRDVs for the corresponding player.
+We use a single-objective EA to solve each single-objective-player problem, and an MOEA for multi-objective players.
+For example, for a game with three players, each with a single decision variable, a candidate with genotype (2.5, 1.0, 4.2) will spawn three EAs:
+\begin{itemize}
+  \item Player 1's EA has an OSP where player 2's decision variable is 1.0 and player 3's decision variable is 4.2.
+  \item Player 2's EA has an OSP where player 1's decision variable is 2.5 and player 3's decision variable is 4.2.
+  \item Player 3's EA has an OSP where player 1's decision variable is 2.5 and player 2's decision variable is 1.0.
+\end{itemize}
 
+In these situations, from \cite{leite2024jpnsec}, we know that a strategy profile is a true PSNE if each player's strategy is an exact BRDV for the OSP defined by the other players' BRDVs simultaneously.
+In other words, assuming ``ideal EAs''\footnote{We call an ``ideal EA'' one that finds the exact Pareto front with absolute accuracy and full diversity.}, in order for an individual to be a \textit{true PSNE}, for each player, the distance between the player's strategy and one of this player's BRDVs must be zero.
+With non-ideal EAs, this distance may not be exactly zero even if the candidate \textit{is} a true PSNE, due to the fact that real-world EAs have a finite population size (and thus \textit{the} perfect BRDV may not be present in the population) and a finite number of generations (and thus the population may not have converged to the true Pareto front yet).
+Nonetheless, the closer this distance is to zero, the better the candidate PSNE is.
+To this end, we define the \textit{player error} as the distance between the player's decision-variable value in the candidate PSNE and the closest BRDV found by the corresponding player's EA for the OSP built from the other players' decision-variable values in the same candidate.
+Finally, we define the \textit{total error} of an individual as the sum of the player errors.
 
-\subsection{Idealized Procedure}
+The proposed flow is illustrated in Fig.~\ref{fig:tanned:architecture}, where it is compared to NSGA-II.
+First, the population of random PSNE estimates is initialized.
+For each individual, we spawn one EA per player, setting the OSP according to the individual's genotype.
+Right after initialization, we run each EA for a small, fixed number of generations, to get an initial approximation of the BRDVs for each player.
+Then, we compute the total error for each individual in the population.
 
-The idealized procedure we propose in this work leverages these concepts to solve continuous games of simultaneous decision with greedy, multi-objective players.
-The reader should note that single-objective players can be treated as a particular case of multi-objective players where the number of objectives $M$ is 1.
-Also, discrete games such as the Prisoner's Dilemma can be seen as a particular case of continuous games where the decision space is finite; thus, in our vision, the proposed method solves every simultaneous continuous game, from the simplest to the most complex.
+\begin{figure*}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{./figs/flowchart_mane.eps}
+  \caption{Comparison between the flow of NSGA-II (left) and the proposed algorithm (right).}
+  \label{fig:tanned:architecture}
+\end{figure*}
 
-As a first step, for each player, we need to enumerate all BRDVs for each OSP.
-For multi-objective players, this is equivalent to determining one Pareto Front per OSP.
-However, following the premise of continuous decision variables, there are infinitely many OSPs, each one potentially with an infinite number of BRDVs.
-Thus, mathematically speaking, we would ideally run infinite independent multi-objective optimizations.
-The resulting BRDVs form a geometric figure for each player in the decision space.
-The shape of each figure depends on the properties of the game model, such as the total number of decisions, the players' objectives, and the specific outcomes for each strategy profile.
-Fig.~\ref{fig:approx_surface} shows points that approximate the BRDVs for the defender (blue) and the attacker (red) in the game of FlipIt with IE and periodic strategies.
-In this case, the BRDVs form a 3D surface for each player.
+The evolutionary loop that follows selects parents based on ranks computed using a novel procedure (discussed in the next paragraph).
+It then applies crossover and mutation to generate offspring, then spawns EAs to evaluate them similarly to what was done for the parents -- however, instead of initializing the EAs from scratch, we \textit{warm-start} them with the final populations from the nearest individual's EAs.
+To the effect of finding the nearest individual, we compute Manhattan distances between individuals' genotypes (that is, Manhattan distances in the decision space).
+Ultimately, we compute the total error for each offspring individual.
+Finally, parents and offspring are combined, and the best individuals are selected using ranks produced by the following procedure.
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_analytical_surfaces.eps}
-    \caption{Decision space for FlipIt with IE with approximated BRDVs for the defender plotted in blue and those for the attacker in red.}
-    \label{fig:approx_surface}
-\end{figure}
+In contrast to traditional ranking concepts, which are based on instantaneous relations between individuals in terms of fitness values (e.g., traditional Pareto-dominance), we propose a new ranking concept called TANNED.
+While traditional ranking concepts leverage \textit{a priori} knowledge on the topology of the ideal solution set (e.g., the trade-off in objective space in multi-objective optimization problems), these schemes are less adequate in cases where no assumptions can be made about either the decision or the objective space.
+In our case, since the objective space was reduced to an aggregate error value, the ideal solution set spans only a single point at coordinate zero (i.e., zero error).
+However, this ideal set can be reached with either diverse or similar/equal individuals in decision space, meaning that if no care is taken, the search may converge to a single point in decision space.
+The idea behind TANNED is to leverage information from previous generations to counteract the lack of assumptions about the topology of the ideal solution set, but still encourage diversity by avoiding a hyper-focus on optimizing fitness values alone.
+This is to say that the rank of an individual is not only based on its static, immutable fitness value (the total error), but also on how this individual interacts with neighboring individuals throughout the generations.
 
-Regardless of the shape of these geometric figures, since by definition each PSNE is a state in which all players play a BRDV simultaneously, we can think of the PSNEs as the intersections of the figures for all players.
-This concept has been explicitly used for single-objective players in \cite{dijk2013flipit} and implicitly in the EA implementation by \cite{sherfield2018flipthem}, but to the best of our knowledge, it has not been generalized to multi-objective players or multi-player games until now.
+Simply put, TANNED brings spatial information from decision space into the primary selection criterion, while still using fitness values to drive the search towards better solutions.
+TANNED assumes only that there is a metric of fitness for individuals (in our case, the total error).
+At initialization time, all individuals (which are all random at this point) are assigned the rank of zero.
+Then, as offspring are produced at each generation, the fitness relations between offspring and parents are used to update the ranks of individuals.
+More specifically, the survival selection flow with TANNED is as follows:
+\begin{enumerate}
+    \item Initialize offspring ranks to zero.
+    \item Initialize a rank-patch vector to zero for all parents (i.e., current population individuals).
+    \item Add one to the rank-patch of each of the $P$ worst-fitness parents
+    \item For each offspring, find the $K$ nearest parents of the offspring in decision space, then:
+    \begin{itemize}
+        \item If the offspring's fitness is better than that of all neighboring parents, the offspring rank remains at zero
+        \item If the offspring's fitness is worse than any neighboring parent, the offspring rank is updated to the rank of the neighboring parent with the worst fitness, plus one
+        \item Every neighboring parent that has worse fitness than the offspring has its rank patched by one
+    \end{itemize}
+    \item Apply the rank-patch to all parents (i.e., add the rank-patch value to each parent's rank)
+    \item Select the best individuals primarily by rank similarly to NSGA-II selection: add all elements from the lowest rank to the next generation's population until no more ranks can be added without exceeding the population size; then, select the remaining individuals from the next rank using CD (secondary criterion).
+\end{enumerate}
 
+The random initialization of individuals at the beginning of the search produces a diverse population with a wide range of fitness values.
+GAs naturally tend to produce offspring that are similar to their parents in decision space, meaning that even very isolated individuals will be likely to have neighbors in subsequent generations as long as they have a reasonable rank.
+At each generation, the worst-fitness individuals are penalized regardless of their neighborhood or rank, meaning that it is highly likely that individuals of low fitness (even isolated ones) will be eventually removed from the population and, until then, will have a reduced chance of being selected as parents.
+An offspring that is worse than its neighbors is likely to have been produced in a well-explored region in decision space, thus they are penalized by being assigned a rank worse than that of their worst-fitness neighbor.
+An offspring that is better than all of its neighbors is a better representative of its region in decision space, thus starting it with rank zero and penalizing the dominated neighbor encourages the replacement of the surviving/reproducing individuals in the region.
 
-\subsection{Numerical Approximation Procedure}
+Diversity is encouraged not only by the use of CD as a secondary criterion, but also by the fact that individuals in crowded regions are more likely to being dominated them in early generations, but less likely to produce offspring that can survive/reproduce later in later generations, when the population has already a better quality overall.
+Additionally, isolated individuals with excellent fitness shall be born with rank zero (when better than all neighbors), and must not suffer from rank-patching penalties even by neighboring offspring -- first because of the smaller likelihood of an offspring being generated nearby, and second because of the reduced chance of being dominated even when an offspring appears.
 
-The problem with the idealized procedure is that it is not feasible to run infinite independent multi-objective optimizations on digital computers.
-Moreover, each optimization is also not perfectly continuous, as even ``real'' variables are represented with a finite number of bits in a computer; although for all practical purposes we can consider them ``real'' valued.
-
-To address these limitations while still confirming the theoretical foundations of the idealized procedure, we propose a numerical procedure that discretizes the OSPs for each player, then approximates the BRDVs for each OSP using a regular single-objective or multi-objective Evolutionary Algorithm (EA).
-To do so, we divide the decision space into a grid with a user-specified number of divisions per decision variable, compute the grid centers, and use opponent-controlled variable values from these centers as OSPs.
-This approach avoids game-theory-specific fitness functions (see \cite{leite2024cec}, \cite{lung2008computing}, \cite{lung2020pareto}), adopting a Pareto-Front approach that should appear more intuitive to researchers in the field of Computational Optimization.
-The PSNEs are then computed as the points from each player that are within a small arbitrary distance $\epsilon$ from a point from every other player (i.e., the intersection of the approximated BRDVs).
-
-The procedure overview is shown in Algorithm~\ref{alg:approximation}.
-The algorithm receives as inputs the player data (such as the number of decisions and objectives), the upper and lower bounds for the decision variables, the number of grid divisions per decision variable, the number of outer loops to perform, the number of nested EA generations, and the intersection threshold $\epsilon$.
-
-The algorithm first computes the fixed OSPs for each player, then instantiates an EA for each player and OSP.
-Each of these EAs have the sole purpose of approximating the BRDVs by optimizing that player's objectives through evolutionary operators over the player's decisions (i.e., no changes are made to the OSP).
-Thus, each nested EA will be single-objective if the respective player is single-objective, or multi-objective if the player is multi-objective.
-The EAs are always made to evolve for a fixed number of generations before the algorithm proceeds to compute the PSNEs by intersecting approximated BRDVs from all players.
-Specifically, any BRDV estimation from one player that is within a small $\epsilon$ distance from at least one BRDV estimation from every other player is considered a PSNE.
-This can be seen as an approximation to the final step in the classic procedure for finding PSNEs presented in Subsection \ref{gametheory}, and closely resembles the NE interpretations discussed in the same subsection.
-Also, this allows one to establish a hard limit on the number of PSNEs to be found, which is given by the grid dimensions and the EA population sizes.
-
-\begin{algorithm}[h]
-    \SetAlgoLined
-    
-    \KwIn{\\
-        \begin{tabular}{ll}
-            \texttt{players} & Player data\\
-            \texttt{bounds} & Decision variable bounds\\
-            \texttt{n\_dims} & Grid divisions per decision\\
-            \texttt{n\_gens} & Number of generations\\
-            \texttt{n\_nest\_gens} & Nested generations\\
-            \texttt{$\epsilon$} & Intersection threshold\\
-        \end{tabular}
-    }
-
-    \For{\texttt{p} \textbf{in} \texttt{players}}{
-        \texttt{p.osps} $\leftarrow$ \texttt{get\_osps}(\texttt{p}, \texttt{bounds}, \texttt{n\_dims})\;
-        \For{\texttt{osp} \textbf{in} \texttt{p.osps}}{
-            \texttt{p.eas.add}(new EA for \texttt{p} and \texttt{osp})\;
-        }
-    }
-
-    \For{\texttt{g} \textbf{in} \texttt{1} \textbf{to} \texttt{n\_gens}}{
-        
-        \For{\texttt{p} \textbf{in} \texttt{players}}{
-            \For{\texttt{osp} \textbf{in} \texttt{p.osps}}{
-                \texttt{ea} $\leftarrow$ EA for \texttt{osp} in \texttt{p.eas}\;
-                \texttt{ea.run}(\texttt{n\_nest\_gens})\;
-                \tcp{Evaluates w/ \texttt{p.fitness\_fn}}
-            }
-        }
-        
-        \texttt{psnes} $\leftarrow$ \texttt{intersection}(\texttt{players}, \texttt{$\epsilon$})\;
-        \texttt{fits} $\leftarrow$ fitness \textbf{for} \texttt{psne} \textbf{in} \texttt{psnes}\;
-    }
-
-    \KwOut{\\
-        \begin{tabular}{ll}
-            \texttt{psnes} & Approximated solutions\\
-            \texttt{fits} & Fitness values for approxs.\\
-        \end{tabular}
-    }
-    \caption{Numerical approximation of PSNEs.}
-    \label{alg:approximation}
-\end{algorithm}
-
-
+%----------------------------------------------------------------------------------------
 
 \section{Experimental Setup}
 \label{methodology}
 
-The game model used for the experiments was FlipIt with IE and Periodic Strategies (PS) \cite{leite2024cec}, with $φ_0=5$, $k_0=1.0$, $k_1=1.5$, and $c=0.2$.
-Game results were evaluated algebraically through the payoff functions for each player.
-The decision space was discretized into a 40x40x160 grid, with minimum and maximum bounds of 0.01 and 3.00, respectively, for the defender's $\phi$, and 0.005 and 3.00, respectively, for the defender's $\alpha_0$ and the attacker's $\alpha_1$.
-The intersection threshold $\epsilon$ was set to half the diagonal of a grid cell.
+To evaluate the performance of the proposed TANNED approach, we ran experiments on FlipIt with IE, the same benchmark game used in \cite{leite2024cec}, \cite{leite2024jpnsec} and \cite{leite2025gecco}.
+The population size was set to 100 individuals (PSNE candidates).
+Inner player EA's population size was set to 20 individuals (BRDV candidates).
+Each player EA was run for 5 generations per evaluation.
+The number of generations for the main GA was set to 500.
+The number of nearest neighbors $K$ used in TANNED varied between 0 and 3.
+The number of worst-fitness parents $P$ to be penalized at each generation was set to 10.
 
-$(\mu+\lambda)$ Simple EA \cite{Coello_2013} was chosen for each single-objective BRDV approximation (i.e., each attacker EA, for FlipIt with IE), while NSGA-II \cite{Deb_2002} was used for the multi-objective ones (i.e., each defender EA).
-Initial populations were uniformly distributed in each player's strategy set.
-A population size of 30 was used in all EAs, with an offspring size of 10.
-Parent selection used Binary Tournament.
-Crossover was arithmetic, allowing extrapolation up to 0.05 distance units away from the parents.
-The algorithm was executed for 400 generations, with each nested EA running 100 generations each time.
+Two metrics were used.
+GD \cite{lamont1999GD} is frequently used in evolutionary computation to measure the average distance from the estimations to the true Pareto-front.
+IGD \cite{coello2004IGD} is another frequently used performance indicator that measures the opposite: the average distance from a sample of points of the true Pareto front to the generated estimations.
+In our case, the distances are measured between the PSNE estimations and a sample of 200 points from the analytical PSNE curve (not the Pareto front).
+Thus, from now on, we refer to our usage of these metrics as GDe and IGDe, respectively, to avoid confusion with their traditional use in multi-objective optimization.
+GDe is a measure of accuracy, while the IGDe is a metric of both accuracy and diversity.
 
+%----------------------------------------------------------------------------------------
 
 \section{Results and Discussion}
 \label{results}
 
+The results obtained with the TANNED approach are presented in Fig.~\ref{fig:tanned:results}, where they are compared to those obtained with the decision-variable CoEA \cite{leite2024cec} and the MOEA-grid approach \cite{leite2024jpnsec}.
+For the reference approaches, typical ranges of results are shown as dashed lines for comparison.
+As for the TANNED approach, results for different values of $K$ and $P$ are shown; for clarity of presentation, only results for $P \neq 0$ and $K \neq 0$ are shown at this point, since the cases with $K=0$ or $P=0$ reduce to simpler versions of the proposed approach (i.e., no neighborhood consideration or no worst-fitness penalization, respectively) and have a distinctively worse performance.
 
-The experiment results are shown in Fig.~\ref{fig:approx_psne}.
-The figure displays the approximated PSNEs as dots, with defender decision variables on the horizontal axes and the attacker's $\alpha_1$ on the vertical axis.
-The analytically determined (ideal) PSNE curve is shown as a continuous line, providing a reference for assessing the numerical results.
-Fig.~\ref{fig:approx_fitness} shows the fitness values for each approximated PSNE.
+\begin{figure*}[htpb]
+    \includegraphics[width=.80\textwidth]{./figs/mane_non_zero_K_P.eps}
+    \caption{Mean GDe and IGDe over generations for the TANNED approach, for runs with different values of $K \neq 0$ and $P \neq 0$; the interquartile ranges for previous approaches \cite{leite2024cec} \cite{leite2024jpnsec} are shown as dashed lines.}
+    \label{fig:tanned:results}
+\end{figure*}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_population_decision_space.eps}
-    \caption{Approximated PSNEs for FlipIt with IE and PS shown as dots; the continuous line represents the ideal PSNE curve.}
-    \label{fig:approx_psne}
+The order of the legends is the same as that of the mean GDe at the last generation, from worst (top) to best (bottom).
+As can be seen, when $K=1$, both $P=1$ and $P=2$ have a good performance.
+While both reference approaches typically exhibit excellent GDe (i.e., accuracy), \cite{leite2024cec} presents a wide range of values for IGDe (i.e., accuracy and diversity), indicating that the solutions found can either be diverse or concentrated in small regions of the decision space.
+\cite{leite2024jpnsec}, on the other hand, presents a range of IGDe values comparable to that of TANNED, but with an average execution time of 838.9 seconds per run, which is significantly higher than that of TANNED (257.6 seconds).
+For reference, the average execution time per run of \cite{leite2024cec} was approximately 201.9 seconds.
+However, it is worth noting that, as is apparent in Fig.~\ref{fig:tanned:results}, on average, the best-performing configurations of TANNED are able to reach convergence in less than 200 generations, suggesting that further reductions in execution time are possible with appropriate parameter tuning.
+
+To allow a better understanding of the influence of parameters $K$ and $P$ on the performance of TANNED, Fig.~\ref{fig:tanned:fixed_K} presents results for five fixed values of $K$ and varying values of $P$.
+As can be seen, for $K=0$, the performance is generally poor, regardless of the value of $P$.
+Similarly, whenever $P=0$, the performance is poor.
+This indicated that both the worst-fitness penalization and the neighborhood consideration are essential for the success of TANNED.
+By turning the neighborhood off, the algorithm always creates offspring with rank zero, and only penalizes the $P$ worst-fitness parents of each generation.
+When $K=1$, the performance is generally good (except for $P=0$), with most configurations rivaling typical performances of \cite{leite2024jpnsec} in terms of IGDe.
+$P=1$ is the best configuration by both GDe and IGDe for all generations after approximately generation 200, when configurations with other $P$ values start to lose diversity -- possibly due to all individuals having zero rank, thus summarily eliminating individuals purely based on error alone.
+For $K \geq 2$, IGDe performance degrades and even GDe seems to take longer to converge, likely indicating problems with the fitness of the solutions.
+It can be concluded that the best configuration for TANNED in this problem is $K=1$ and $P=1$.
+
+
+\begin{figure}[p]
+  \centering
+  \includegraphics[width=0.94\columnwidth]{figs/mane_K_0.eps}
+  \includegraphics[width=0.94\columnwidth]{figs/mane_K_1.eps}
+  \includegraphics[width=0.94\columnwidth]{figs/mane_K_2.eps}
+  \includegraphics[width=0.94\columnwidth]{figs/mane_K_3.eps}
+  \includegraphics[width=0.94\columnwidth]{figs/mane_K_4.eps}
+  \caption{Results for varying $P$ values: every row has a different fixed $K$.}
+  \label{fig:tanned:fixed_K}
 \end{figure}
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.9\linewidth]{figs/p30_o12_40x40x160_400x100g_71ff16f_01_population_objective_space.eps}
-    \caption{Fitness of the solutions found vs. the ideal fitness curve.}
-    \label{fig:approx_fitness}
-\end{figure}
-
-As can be seen, the approximations closely follow the ideal curve, with very few outliers (in the current run, only one is present).
-The average distance of the approximations to the ideal curve for this run is 0.0381, with a standard deviation of 0.0255.
-This rivals the results obtained in \cite{leite2024cec}.
-
-The number of estimations (77), while far from the previously obtained number and even further from the ideal (infinite), is sufficient to provide a good visual representation of the PSNE curve.
-These results suggest that the proposed method is effective in numerically approximating PSNEs for continuous games of simultaneous decision, providing valuable insights into the game's equilibrium tendencies even in the absence of analytical solutions.
+%----------------------------------------------------------------------------------------
 
 \section{Conclusions and Future Work}
 \label{conclusions}
 
-This paper presented both an idealized procedure and a numerical approximation procedure for solving continuous games of simultaneous decision that can be easily adapted to any number of players, objectives, and solutions.
-The numerical approximation procedure was designed to be very simple, meaning that many of the optimizations that could be performed to improve its performance were not implemented at this stage.
-However, even this basic implementation was shown to be effective in finding a finite number of PSNEs for FlipIt with IE, a game with one single-objective player, one multi-objective player, and three continuous decision variables in total.
+In this work, we presented a new GA approach for finding PSNE in multi-objective games, leveraging a novel non-instantaneous dominance concept called TANNED to guide the search.
+The proposed approach was experimentally evaluated with simultaneous continuous games on the same molds of previous works.
+Standard GAs were used as inner player solvers to find BRDVs for each player given the OSPs defined by candidate PSNE individuals.
 
-The approximations found exhibited a good distribution and a low noise level despite the reduced number of actual estimations.
-With this method, the analyst can obtain a visual representation of the game's equilibrium tendencies, even for cases where analytical solutions are unavailable.
-The proposed method offers an approach that may be intuitive for researchers in the field of computational optimization, as the EAs are not modified with game-theory-based fitness functions.
-It should also be intuitive for researchers in the field of game theory, as the convergence criterion essentially generalizes the game-theoretical concept of ``all players playing best responses simultaneously''.
-We hope that the framework provided here can guide the development of new, more efficient methods to solve game-theoretical models of simultaneous decision and continuous decision spaces.
-
-As future works, we plan to increase the method's computational efficiency by enhancing the intersection-computing algorithm and by dynamically allocating resources to the EAs (e.g., population size, offspring size, number of generations) based on criteria such as convergence and distance to opponent populations.
-We also plan to fully investigate the effects of increasing the grid resolution, especially in a dynamic manner as the nested EAs start to converge and therefore to reveal the regions of interest in the decision space.
-These improvements may allow for a finer grid, faster convergence, larger population sizes and, hopefully, a larger and more accurate set of estimations.
-Initial experiments in this direction have already shown promising results.
-Finally, we also plan to extend this method to be able to investigate adaptive strategies for FlipIt.
+While the proposed approach underperforms previous methods in terms of GDe, it rivals the best results in the literature in terms of IGDe, suggesting that it is able to find a much more diverse set of PSNE estimates.
+It also shows potential to be the best performing in terms of execution times.
+The architecture of the proposed approach is simpler and less hardware intensive than existing approaches, and is flexible enough to allow the use of different inner EAs for solving player problems, as well as different genetic operators for the main GA.
+In future work, further improvements in the algorithm and its parameters will be explored.
 
 \bibliographystyle{plain}
 \bibliography{symposium}
