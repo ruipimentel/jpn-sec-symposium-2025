@@ -34,18 +34,19 @@
 \beginheader
 
 \jtitle%
-{An Evolutionary-Computing Based Framework for Approaching Simultaneous Continuous Games with Infinite Solutions}
+{Error-Driven Ranking for Evolutionary-Computing Estimation of Nash Equilibria in Simultaneous Continuous Games}
 
 \begin{authors}
 \name{1}{Rui Leite},
 \name{1}{Hernan Aguirre},
-\name{1}{Kiyoshi Tanaka},
+\name{2}{Gilberto Reynoso-Meza},
 \end{authors}
 
 
 
 \begin{affiliation}
-\aff{1}{Graduate School of Medicine, Science and Technology, Shinshu University},
+\aff{1}{Shinshu University},
+\aff{2}{Pontifícia Universidade Católica do Paraná (PUCPR)},
 \end{affiliation}
 
 \endheader
@@ -53,14 +54,17 @@
 \end{center}
 ]
 
-\etitle{An Evolutionary-Computing Based Framework for Approaching Simultaneous Continuous Games with Infinite Solutions}
+\etitle{Error-Driven Ranking for Evolutionary-Computing Estimation of Nash Equilibria in Simultaneous Continuous Games}
 
 \ename{1}{Rui Leite(23hs201j@shinshu-u.ac.jp)}
 \ename{1}{Hernan Aguirre(ahernan@shinshu-u.ac.jp)}
-\ename{1}{Kiyoshi Tanaka(ktanaka@shinshu-u.ac.jp)}
+\ename{2}{Gilberto Reynoso-Meza(g.reynosomeza@pucpr.br)}
 
 \eaff{1}{%
-Graduate School of Medicine, Science and Technology, Shinshu University
+Shinshu University
+}
+\eaff{2}{%
+Pontifícia Universidade Católica do Paraná (PUCPR)
 }
 
 \vspace{3mm}
@@ -69,9 +73,13 @@ Graduate School of Medicine, Science and Technology, Shinshu University
 \xkanjiskip=.1zw plus 3pt minus 3pt
 
 % Abstract (200 words max.)
-% In this paper, we present a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions even when the objective space is continuous and may contain an infinite number of solutions.
-% The proposed method shall appear intuitive to researchers in Game Theory, because it generalizes the basic analytical methods, but also to researchers in Computational Optimization, because it leverages concepts of this field to transform an otherwise infinite problem into a finite set of optimization ones.
-% Through experimental validation with a cybersecurity game model, we demonstrate the method's convergence to a finite but representative number of game solutions, and discuss the many possible future improvements.
+% Game theory has recently gained attention in the field of cybersecurity, as it provides a formal framework to model the interactions between attackers and defenders.
+% In this context, the solution concept of Nash equilibrium is often used to identify optimal strategies for all players concurrently.
+% For games of simultaneous decision and continuous strategy sets with an infinite number of Nash equilibria, producing an accurate and diversified set of estimations for such equilibria is a challenging task.
+% In this work, we present a novel ranking scheme meant for evolutionary algorithms that approximate Nash equilibria for simultaneous continuous games with multi-objective players.
+% The proposed ranking procedure leverages information from previous generations to guide the search towards high-quality solutions, while still encouraging diversity by avoiding a hyper-focus on optimizing fitness values alone.
+% We conducted experiments with a cybersecurity game model called FlipIt with Infrastructure Enhancement, which has an infinite number of Nash equilibria.
+% The results show that the proposed approach is competitive with existing methods, being particularly effective in terms of solution diversity and hardware usage.
 
 \section{Introduction}
 
