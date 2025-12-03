@@ -99,7 +99,7 @@ Finding NE via algebra in these cases gets increasingly complicated with the com
 This is why numerical methods are often preferred.
 Co-Evolutionary Algorithms (CoEA) were used for estimating solutions for FlipIt with IE by evolving populations of decision-variable values concurrently \cite{leite2024cec}.
 This approach led to very accurate approximations, but presented challenges in terms of architectural complexity and diversity of estimations.
-Another work \cite{leite2024jpnsec} proposed a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions by decomposing the decision space into a grid of MOOPs.
+Another work \cite{leite2025jpnsectransaction} proposed a novel evolutionary-computing based optimization procedure for continuous games of simultaneous decision, specifically aimed at providing a more comprehensive framework for approximating game solutions by decomposing the decision space into a grid of MOOPs.
 This framework generalizes the basic analytical methods from game theory and leverages concepts of evolutionary computation to transform an otherwise infinite problem into a finite set of optimization ones; however, the computational cost grows non-linearly with the grid resolution.
 Finally, in \cite{leite2025gecco} a simpler CoEA architecture was proposed that searches for a single NE per run, incorporating special requirements to ensure future applicability in a coordinating process to find multiple equilibria in a single run.
 
@@ -180,7 +180,7 @@ Fig.~\ref{fig:analytical_objective_space} shows its game outcomes.
 \label{algorithm}
 
 In the decision-variable CoEA by Leite et al. \cite{leite2024cec}, a fitness composed of a single scalar was computed for each decision-variable value, and a simple proportional selection scheme was used to select the best values during evolution.
-In the Multi-Objective Evolutionary Algorithm (MOEA) grid-based framework \cite{leite2024jpnsec} and the single-PSNE CoEA approach \cite{leite2025gecco}, MOEAs were used to solve player problems as part of the process of finding PSNE, guided by the Pareto-dominance relation.
+In the Multi-Objective Evolutionary Algorithm (MOEA) grid-based framework \cite{leite2025jpnsectransaction} and the single-PSNE CoEA approach \cite{leite2025gecco}, MOEAs were used to solve player problems as part of the process of finding PSNE, guided by the Pareto-dominance relation.
 
 What all of these approaches have in common is the use of traditional ranking concepts to drive the search, be this search for a single- or multi-objective optimization as a part of the PSNE search, or be it directly for the PSNE search itself.
 For example, for single-objective optimization, solutions are ranked based simply on their fitness values: better fitness means better rank.
@@ -192,7 +192,7 @@ In the proposed Genetic Algorithm (GA), each individual in the population consis
 Each individual represents a \textit{candidate PSNE}, or, in other words, a PSNE estimate.
 In this sense, the fitness function must evaluate how close an individual is to being a true PSNE.
 
-Leite et al. \cite{leite2024jpnsec} define the Opponent Strategy Profile (OSP) for a given player as the strategy profile composed of the decision-variable values of all other players except the given player.
+Leite et al. \cite{leite2025jpnsectransaction} define the Opponent Strategy Profile (OSP) for a given player as the strategy profile composed of the decision-variable values of all other players except the given player.
 Each player's Best Response Decision Variable (BRDV) is defined as the tuple of decision-variable values that maximize the player's payoff for a given OSP.
 To evaluate the fitness for each candidate, we spawn one Evolutionary Algorithm (EA) per candidate and per player in the game.
 Each EA is fed the OSP defined by the other players' decision-variable values in the candidate, and tasked with finding the BRDVs for the corresponding player.
@@ -204,7 +204,7 @@ For example, for a game with three players, each with a single decision variable
   \item Player 3's EA has an OSP where player 1's decision variable is 2.5 and player 2's decision variable is 1.0.
 \end{itemize}
 
-In these situations, from \cite{leite2024jpnsec}, we know that a strategy profile is a true PSNE if each player's strategy is an exact BRDV for the OSP defined by the other players' BRDVs simultaneously.
+In these situations, from \cite{leite2025jpnsectransaction}, we know that a strategy profile is a true PSNE if each player's strategy is an exact BRDV for the OSP defined by the other players' BRDVs simultaneously.
 In other words, assuming ``ideal EAs''\footnote{We call an ``ideal EA'' one that finds the exact Pareto front with absolute accuracy and full diversity.}, in order for an individual to be a \textit{true PSNE}, for each player, the distance between the player's strategy and one of this player's BRDVs must be zero.
 With non-ideal EAs, this distance may not be exactly zero even if the candidate \textit{is} a true PSNE, due to the fact that real-world EAs have a finite population size (and thus \textit{the} perfect BRDV may not be present in the population) and a finite number of generations (and thus the population may not have converged to the true Pareto front yet).
 Nonetheless, the closer this distance is to zero, the better the candidate PSNE is.
@@ -270,7 +270,7 @@ Additionally, isolated individuals with excellent fitness shall be born with ran
 \section{Experimental Setup}
 \label{methodology}
 
-To evaluate the performance of the proposed TANNED approach, we ran experiments on FlipIt with IE, the same benchmark game used in \cite{leite2024cec}, \cite{leite2024jpnsec} and \cite{leite2025gecco}.
+To evaluate the performance of the proposed TANNED approach, we ran experiments on FlipIt with IE, the same benchmark game used in \cite{leite2024cec}, \cite{leite2025jpnsectransaction} and \cite{leite2025gecco}.
 The population size was set to 100 individuals (PSNE candidates).
 Inner player EA's population size was set to 20 individuals (BRDV candidates).
 Each player EA was run for 5 generations per evaluation.
@@ -290,21 +290,21 @@ GDe is a measure of accuracy, while the IGDe is a metric of both accuracy and di
 \section{Results and Discussion}
 \label{results}
 
-The results obtained with the TANNED approach are presented in Fig.~\ref{fig:tanned:results}, where they are compared to those obtained with the decision-variable CoEA \cite{leite2024cec} and the MOEA-grid approach \cite{leite2024jpnsec}.
+The results obtained with the TANNED approach are presented in Fig.~\ref{fig:tanned:results}, where they are compared to those obtained with the decision-variable CoEA \cite{leite2024cec} and the MOEA-grid approach \cite{leite2025jpnsectransaction}.
 For the reference approaches, typical ranges of results are shown as dashed lines for comparison.
 As for the TANNED approach, results for different values of $K$ and $P$ are shown; for clarity of presentation, only results for $P \neq 0$ and $K \neq 0$ are shown at this point, since the cases with $K=0$ or $P=0$ reduce to simpler versions of the proposed approach (i.e., no neighborhood consideration or no worst-fitness penalization, respectively) and have a distinctively worse performance.
 
 \begin{figure*}[htpb]
     \centering
     \includegraphics[width=.80\textwidth]{./figs/mane_non_zero_K_P.eps}
-    \caption{Mean GDe and IGDe over generations for the TANNED approach, for runs with different values of $K \neq 0$ and $P \neq 0$; the interquartile ranges for previous approaches \cite{leite2024cec} \cite{leite2024jpnsec} are shown as dashed lines.}
+    \caption{Mean GDe and IGDe over generations for the TANNED approach, for runs with different values of $K \neq 0$ and $P \neq 0$; the interquartile ranges for previous approaches \cite{leite2024cec} \cite{leite2025jpnsectransaction} are shown as dashed lines.}
     \label{fig:tanned:results}
 \end{figure*}
 
 The order of the legends is the same as that of the mean GDe at the last generation, from worst (top) to best (bottom).
 As can be seen, when $K=1$, both $P=1$ and $P=2$ have a good performance.
 While both reference approaches typically exhibit excellent GDe (i.e., accuracy), \cite{leite2024cec} presents a wide range of values for IGDe (i.e., accuracy and diversity), indicating that the solutions found can either be diverse or concentrated in small regions of the decision space.
-\cite{leite2024jpnsec}, on the other hand, presents a range of IGDe values comparable to that of TANNED, but with an average execution time of 838.9 seconds per run, which is significantly higher than that of TANNED (257.6 seconds).
+\cite{leite2025jpnsectransaction}, on the other hand, presents a range of IGDe values comparable to that of TANNED, but with an average execution time of 838.9 seconds per run, which is significantly higher than that of TANNED (257.6 seconds).
 For reference, the average execution time per run of \cite{leite2024cec} was approximately 201.9 seconds.
 However, it is worth noting that, as is apparent in Fig.~\ref{fig:tanned:results}, on average, the best-performing configurations of TANNED are able to reach convergence in less than 200 generations, suggesting that further reductions in execution time are possible with appropriate parameter tuning.
 
@@ -313,7 +313,7 @@ As can be seen, for $K=0$, the performance is generally poor, regardless of the 
 Similarly, whenever $P=0$, the performance is poor.
 This indicated that both the worst-fitness penalization and the neighborhood consideration are essential for the success of TANNED.
 By turning the neighborhood off, the algorithm always creates offspring with rank zero, and only penalizes the $P$ worst-fitness parents of each generation.
-When $K=1$, the performance is generally good (except for $P=0$), with most configurations rivaling typical performances of \cite{leite2024jpnsec} in terms of IGDe.
+When $K=1$, the performance is generally good (except for $P=0$), with most configurations rivaling typical performances of \cite{leite2025jpnsectransaction} in terms of IGDe.
 $P=1$ is the best configuration by both GDe and IGDe for all generations after approximately generation 200, when configurations with other $P$ values start to lose diversity -- possibly due to all individuals having zero rank, thus summarily eliminating individuals purely based on error alone.
 For $K \geq 2$, IGDe performance degrades and even GDe seems to take longer to converge, likely indicating problems with the fitness of the solutions.
 It can be concluded that the best configuration for TANNED in this problem is $K=1$ and $P=1$.
