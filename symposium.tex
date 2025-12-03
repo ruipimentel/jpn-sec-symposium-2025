@@ -180,11 +180,11 @@ Fig.~\ref{fig:analytical_objective_space} shows its game outcomes.
 \label{algorithm}
 
 In the decision-variable CoEA by Leite et al. \cite{leite2024cec}, a fitness composed of a single scalar was computed for each decision-variable value, and a simple proportional selection scheme was used to select the best values during evolution.
-In the MOEA grid-based framework \cite{leite2024jpnsec} and the single-PSNE CoEA approach \cite{leite2025gecco} by the same authors, MOEAs were used to solve player problems as part of the process of finding PSNE, guided by the Pareto-dominance relation.
+In the Multi-Objective Evolutionary Algorithm (MOEA) grid-based framework \cite{leite2024jpnsec} and the single-PSNE CoEA approach \cite{leite2025gecco}, MOEAs were used to solve player problems as part of the process of finding PSNE, guided by the Pareto-dominance relation.
 
 What all of these approaches have in common is the use of traditional ranking concepts to drive the search, be this search for a single- or multi-objective optimization as a part of the PSNE search, or be it directly for the PSNE search itself.
 For example, for single-objective optimization, solutions are ranked based simply on their fitness values: better fitness means better rank.
-When the non-dominated sorting concept present in NSGA-II \cite{Deb_2002} was used, the rank is computed based on traditional Pareto-dominance between solutions.
+When the non-dominated sorting concept present in the Non-Dominated Sorting Genetic Algorithm II (NSGA-II) \cite{Deb_2002} was used, the rank is computed based on traditional Pareto-dominance between solutions.
 In any case, better-ranked solutions are prioritized in the survival selection and the subsequent parent selection.
 That is to say that the ranks reflect the immediate relations between the solutions in the generation in terms of fitness, and this (instantaneous) status drives the evolutionary process.
 
@@ -194,7 +194,7 @@ In this sense, the fitness function must evaluate how close an individual is to 
 
 Leite et al. \cite{leite2024jpnsec} define the Opponent Strategy Profile (OSP) for a given player as the strategy profile composed of the decision-variable values of all other players except the given player.
 Each player's Best Response Decision Variable (BRDV) is defined as the tuple of decision-variable values that maximize the player's payoff for a given OSP.
-To evaluate the fitness for each candidate, we spawn one EA per candidate and per player in the game.
+To evaluate the fitness for each candidate, we spawn one Evolutionary Algorithm (EA) per candidate and per player in the game.
 Each EA is fed the OSP defined by the other players' decision-variable values in the candidate, and tasked with finding the BRDVs for the corresponding player.
 We use a single-objective EA to solve each single-objective-player problem, and an MOEA for multi-objective players.
 For example, for a game with three players, each with a single decision variable, a candidate with genotype (2.5, 1.0, 4.2) will spawn three EAs:
@@ -220,7 +220,7 @@ Then, we compute the total error for each individual in the population.
 \begin{figure*}[h]
   \centering
   \includegraphics[width=0.8\textwidth]{./figs/flowchart_mane.eps}
-  \caption{Comparison between the flow of NSGA-II (left) and the proposed algorithm (right).}
+  \caption{Comparison between the flow of NSGA-II (left) and the proposed TANNED approach (right).}
   \label{fig:tanned:architecture}
 \end{figure*}
 
@@ -230,7 +230,7 @@ To the effect of finding the nearest individual, we compute Manhattan distances 
 Ultimately, we compute the total error for each offspring individual.
 Finally, parents and offspring are combined, and the best individuals are selected using ranks produced by the following procedure.
 
-In contrast to traditional ranking concepts, which are based on instantaneous relations between individuals in terms of fitness values (e.g., traditional Pareto-dominance), we propose a new ranking concept called TANNED.
+In contrast to traditional ranking concepts, which are based on instantaneous relations between individuals in terms of fitness values (e.g., traditional Pareto-dominance), we propose a new ranking concept called Topology-Agnostic Nearest-Neighbor Error Dominance (TANNED).
 While traditional ranking concepts leverage \textit{a priori} knowledge on the topology of the ideal solution set (e.g., the trade-off in objective space in multi-objective optimization problems), these schemes are less adequate in cases where no assumptions can be made about either the decision or the objective space.
 In our case, since the objective space was reduced to an aggregate error value, the ideal solution set spans only a single point at coordinate zero (i.e., zero error).
 However, this ideal set can be reached with either diverse or similar/equal individuals in decision space, meaning that if no care is taken, the search may converge to a single point in decision space.
@@ -253,7 +253,7 @@ More specifically, the survival selection flow with TANNED is as follows:
         \item Every neighboring parent that has worse fitness than the offspring has its rank patched by one
     \end{itemize}
     \item Apply the rank-patch to all parents (i.e., add the rank-patch value to each parent's rank)
-    \item Select the best individuals primarily by rank similarly to NSGA-II selection: add all elements from the lowest rank to the next generation's population until no more ranks can be added without exceeding the population size; then, select the remaining individuals from the next rank using CD (secondary criterion).
+    \item Select the best individuals primarily by rank similarly to NSGA-II selection: add all elements from the lowest rank to the next generation's population until no more ranks can be added without exceeding the population size; then, select the remaining individuals from the next rank using Crowding Distance (CD).
 \end{enumerate}
 
 The random initialization of individuals at the beginning of the search produces a diverse population with a wide range of fitness values.
@@ -279,8 +279,8 @@ The number of nearest neighbors $K$ used in TANNED varied between 0 and 3.
 The number of worst-fitness parents $P$ to be penalized at each generation was set to 10.
 
 Two metrics were used.
-GD \cite{lamont1999GD} is frequently used in evolutionary computation to measure the average distance from the estimations to the true Pareto-front.
-IGD \cite{coello2004IGD} is another frequently used performance indicator that measures the opposite: the average distance from a sample of points of the true Pareto front to the generated estimations.
+Generational Distance (GD) \cite{lamont1999GD} is frequently used in evolutionary computation to measure the average distance from the estimations to the true Pareto-front.
+Inverted Generational Distance (IGD) \cite{coello2004IGD} is another frequently used performance indicator that measures the opposite: the average distance from a sample of points of the true Pareto front to the generated estimations.
 In our case, the distances are measured between the PSNE estimations and a sample of 200 points from the analytical PSNE curve (not the Pareto front).
 Thus, from now on, we refer to our usage of these metrics as GDe and IGDe, respectively, to avoid confusion with their traditional use in multi-objective optimization.
 GDe is a measure of accuracy, while the IGDe is a metric of both accuracy and diversity.
@@ -295,6 +295,7 @@ For the reference approaches, typical ranges of results are shown as dashed line
 As for the TANNED approach, results for different values of $K$ and $P$ are shown; for clarity of presentation, only results for $P \neq 0$ and $K \neq 0$ are shown at this point, since the cases with $K=0$ or $P=0$ reduce to simpler versions of the proposed approach (i.e., no neighborhood consideration or no worst-fitness penalization, respectively) and have a distinctively worse performance.
 
 \begin{figure*}[htpb]
+    \centering
     \includegraphics[width=.80\textwidth]{./figs/mane_non_zero_K_P.eps}
     \caption{Mean GDe and IGDe over generations for the TANNED approach, for runs with different values of $K \neq 0$ and $P \neq 0$; the interquartile ranges for previous approaches \cite{leite2024cec} \cite{leite2024jpnsec} are shown as dashed lines.}
     \label{fig:tanned:results}
@@ -342,6 +343,10 @@ While the proposed approach underperforms previous methods in terms of GDe, it r
 It also shows potential to be the best performing in terms of execution times.
 The architecture of the proposed approach is simpler and less hardware intensive than existing approaches, and is flexible enough to allow the use of different inner EAs for solving player problems, as well as different genetic operators for the main GA.
 In future work, further improvements in the algorithm and its parameters will be explored.
+
+\section*{Acknowledgments}
+
+Author Leite acknowledges support by the Federal University of Technology - Paraná (UTFPR) and by the Japanese Ministry of Education, Culture, Sports, Science and Technology (MEXT).
 
 \bibliographystyle{plain}
 \bibliography{symposium}
